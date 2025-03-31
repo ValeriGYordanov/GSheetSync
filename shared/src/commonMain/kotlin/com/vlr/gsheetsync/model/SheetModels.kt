@@ -1,5 +1,6 @@
 package com.vlr.gsheetsync.model
 
+import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -7,7 +8,7 @@ data class SheetCell(
     val row: Int,
     val column: Int,
     val value: String,
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = Clock.System.now().toEpochMilliseconds()
 )
 
 @Serializable

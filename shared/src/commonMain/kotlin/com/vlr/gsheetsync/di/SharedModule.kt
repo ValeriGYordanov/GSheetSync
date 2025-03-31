@@ -10,16 +10,23 @@ import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 import org.koin.core.module.Module
 import org.koin.dsl.module
+import io.ktor.client.HttpClient
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.serialization.kotlinx.json.json
 
 expect fun platformModule(): Module
 
 val sharedModule = module {
     single { Json { prettyPrint = true } }
-    
-    single {
+
+    single<HttpClient> {
         HttpClient {
             install(ContentNegotiation) {
-                json(get())
+                json(Json {
+                    prettyPrint = true
+                    isLenient = true
+                    ignoreUnknownKeys = true
+                })
             }
         }
     }
