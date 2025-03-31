@@ -1,33 +1,95 @@
-# Gradle files
+# Kotlin/Java/Gradle
+*.iml
 .gradle/
 build/
-
-# Local configuration file (sdk path, etc)
+gradle-app.setting
+gradle.log
+gradlew
+gradlew.bat
 local.properties
-
-# Log/OS Files
-*.log
-
-# Android Studio generated files and folders
-captures/
-.externalNativeBuild/
-.cxx/
-*.apk
-output.json
-
-# IntelliJ
-*.iml
 .idea/
-misc.xml
-deploymentTargetDropDown.xml
-render.experimental.xml
-
-# Keystore files
-*.jks
+*.kts~
+*.log
+*.jar
+*.war
+*.ear
+*.class
+*.apk
+*.dex
+*.so
 *.keystore
+out/
+captures/
 
-# Google Services (e.g. APIs or Firebase)
-google-services.json
+# Kotlin Multiplatform Generated Files
+.metadata/
+.kotlin/
+bin/
+*.map
 
-# Android Profiling
-*.hprof
+# IntelliJ IDEA / Android Studio
+/.idea/
+/*.iws
+/*.ipr
+/*.iwork
+/*.iml
+/.DS_Store
+/.gradle/
+/build/
+/captures/
+
+# Android Specific
+/android/.cxx/
+android/app/*.keystore
+android/app/google-services.json
+android/app/src/main/assets/*.properties
+android/app/src/main/jniLibs/
+
+# iOS/macOS Specific
+iosApp/.swiftpm
+iosApp/.build/
+iosApp/Pods/
+iosApp/xcuserdata/
+iosApp/DerivedData/
+iosApp/*.xcworkspace
+iosApp/*.pbxuser
+iosApp/*.mode1v3
+iosApp/*.mode2v3
+iosApp/*.xcscmblueprint
+iosApp/*.xcodeproj/project.xcworkspace/
+iosApp/*.xcodeproj/xcuserdata/
+
+# Carthage
+/Carthage/Checkouts
+/Carthage/Build
+
+# CocoaPods
+iosApp/Pods/
+iosApp/Podfile.lock
+iosApp/.xcworkspace/
+
+# Swift Package Manager
+iosApp/.swiftpm/
+iosApp/Package.resolved
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/
+fastlane/test_output/
+
+# Xcode specific
+xcuserdata/
+*.xcuserstate
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Misc
+*.swp
+*.swo
+*.swn
+*.bak
+*.tmp
