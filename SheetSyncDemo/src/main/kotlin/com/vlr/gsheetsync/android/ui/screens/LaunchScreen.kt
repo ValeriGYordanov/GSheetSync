@@ -12,7 +12,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.vlr.gsheetsync.presentation.ui.SheetUiState
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LaunchScreen(
     onConnectionSuccess: () -> Unit,
@@ -47,12 +46,13 @@ fun LaunchScreen(
                 label = { Text("API Key", color = Color.White) },
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth(),
-                colors = TextFieldDefaults.outlinedTextFieldColors(
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color.White,
                     cursorColor = Color.White,
                     focusedBorderColor = Color(0xFF2196F3),
                     unfocusedBorderColor = Color(0xFF757575),
                     focusedLabelColor = Color(0xFF2196F3),
-                    unfocusedLabelColor = Color(0xFF757575)
+                    unfocusedLabelColor = Color(0xFF757575),
                 ),
                 shape = RoundedCornerShape(8.dp)
             )
