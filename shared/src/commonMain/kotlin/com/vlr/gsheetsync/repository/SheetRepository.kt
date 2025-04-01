@@ -13,8 +13,10 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.json.Json
 
 interface SheetRepository {
+    suspend fun initialize(apiKey: String)
     suspend fun getCell(config: SheetConfig, row: Int, column: Int): SheetCell
     suspend fun updateCell(config: SheetConfig, cell: SheetCell): Boolean
+    suspend fun deleteCell(config: SheetConfig, row: Int, column: Int): Boolean
     suspend fun getRange(config: SheetConfig, range: String): SheetRange
     fun observeCell(config: SheetConfig, row: Int, column: Int): Flow<SheetCell>
 }
@@ -24,6 +26,30 @@ class GoogleSheetRepository(
     private val json: Json
 ) : SheetRepository {
     private val baseUrl = "https://sheets.googleapis.com/v4/spreadsheets"
+    private var currentApiKey: String? = null
+
+    override suspend fun initialize(apiKey: String) {
+        currentApiKey = apiKey
+        // Verify the API key by making a test request
+        httpClient.get("$baseUrl/test") {
+            url {
+                parameters.append("key", apiKey)
+            }
+        }
+    }
+
+    override suspend fun deleteCell(config: SheetConfig, row: Int, column: Int): Boolean {
+        val range = "${getColumnName(column)}${row + 1}"
+        val response = httpClient.put("$baseUrl/${config.spreadsheetId}/values/$range") {
+            url {
+                parameters.append("key", config.apiKey)
+                parameters.append("valueInputOption", "RAW")
+            }
+            setBody(listOf(listOf(""))) // Set empty string to clear the cell
+        }
+        
+        return response.status.isSuccess()
+    }
 
     override suspend fun getCell(config: SheetConfig, row: Int, column: Int): SheetCell {
         val range = "${getColumnName(column)}${row + 1}"
