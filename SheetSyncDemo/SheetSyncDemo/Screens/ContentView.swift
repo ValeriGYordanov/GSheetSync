@@ -1,33 +1,11 @@
 import SwiftUI
 import shared
 
-extension ContentView {
-    
-    @MainActor
-    class SheetViewModelWrapper: ObservableObject {
-        let sheetViewModel: SheetViewModel
-
-        init() {
-            sheetViewModel = ViewModelInjector().sheetViewModel
-            sheetState = sheetViewModel.state.value // Initialize with the current value
-        }
-
-        @Published var sheetState: SyncResult // Change type to store actual state
-
-        func startObserving() {
-            Task {
-                for await states in sheetViewModel.state { // Iterate over state flow
-                    self.sheetState = states // Assign the unwrapped value
-                }
-            }
-        }
-    }
-}
 
 struct ContentView: View {
-    @ObservedObject private(set) var viewModel: SheetViewModelWrapper
+    @ObservedObject var viewModel: SheetViewModelWrapper
+    @Binding var showHome: Bool
     @State private var apiKey: String = ""
-    @State private var showHome: Bool = false
     
     var body: some View {
         NavigationStack {
@@ -46,13 +24,9 @@ struct ContentView: View {
                         .padding(.horizontal)
                         .foregroundColor(.white)
                         .tint(.white)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(apiKey.isEmpty ? Color(red: 0.459, green: 0.459, blue: 0.459) : Color(red: 0.129, green: 0.588, blue: 0.953), lineWidth: 1)
-                        )
                     
                     Button(action: {
-                        viewModel.sheetViewModel.initialiseService(apiKey: apiKey)
+                        viewModel.sheetViewModel.initialiseService(accessToken: apiKey)
                     }) {
                         if viewModel.sheetState.loading {
                             ProgressView()
@@ -76,20 +50,24 @@ struct ContentView: View {
                 }
                 .padding()
             }
-            .navigationDestination(isPresented: $showHome) {
-                HomeView()
+            .onAppear {
+                self.viewModel.startObserving()
             }
-            .onChange(of: viewModel.sheetState.success) { success in
-                if success != nil {
+            .navigationDestination(isPresented: $showHome) {
+                HomeScreen()
+            }
+            .onChange(of: viewModel.sheetState) { oldState, newState in
+                SyncLog().print(message: "State changed from \(oldState) to \(newState)")
+                if newState.success != nil {
+                    SyncLog().print(message: "Success detected - navigating to Home")
                     showHome = true
                 }
             }
         }
-        .onAppear {
-            self.viewModel.startObserving()
-        }
     }
 }
+
+
 
 struct CustomTextFieldStyle: TextFieldStyle {
     func _body(configuration: TextField<Self._Label>) -> some View {
@@ -107,4 +85,4 @@ struct ErrorMessage: View {
         Text(message)
             .font(.title)
     }
-} 
+}
