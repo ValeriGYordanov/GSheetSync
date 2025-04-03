@@ -6,6 +6,7 @@ import com.vlr.gsheetsync.feature.sheets.domain.SheetsUseCase
 import com.vlr.gsheetsync.feature.sheets.presentation.model.SyncResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -21,7 +22,9 @@ class SheetViewModel(private val useCase: SheetsUseCase): BaseViewModel() {
     }
 
     fun initialiseService(accessToken: Any) {
+        SyncLog.print("Initializing with TOKEN: $accessToken")
         scope.launch {
+            delay(5000)
             withContext(Dispatchers.IO) {
                 _state.emit(SyncResult(loading = true))
 

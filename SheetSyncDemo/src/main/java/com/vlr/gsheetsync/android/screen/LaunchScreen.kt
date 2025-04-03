@@ -61,10 +61,12 @@ fun LaunchScreen(
             )
 
             GoogleSignInButton {
-                if (it != null) {
-                    sheetViewModel.initialiseService(it)
-                } else {
-                    SyncLog.print("FAIL:")
+                if (!state.value.loading) {
+                    if (it != null) {
+                        sheetViewModel.initialiseService(it)
+                    } else {
+                        SyncLog.print("FAIL:")
+                    }
                 }
             }
 
@@ -88,11 +90,6 @@ fun LaunchScreen(
 @Composable
 fun GoogleSignInButton(onSignInResult: (AccessToken?) -> Unit) {
     val context = LocalContext.current
-
-    val previousAccount = GoogleSignIn.getLastSignedInAccount(context)
-    if (previousAccount != null) {
-        onSignInResult(AccessToken(previousAccount.idToken, null))
-    }
 
     val scope = CoroutineScope(Dispatchers.IO)
     val coroutineScope = rememberCoroutineScope()

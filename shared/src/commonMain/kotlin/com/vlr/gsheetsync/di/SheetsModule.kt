@@ -7,7 +7,7 @@ import com.vlr.gsheetsync.feature.sheets.presentation.SheetViewModel
 import org.koin.dsl.module
 
 val sheetsModule = module {
-    single<SpreadSheetService> { SpreadSheetService() }
+    single<SpreadSheetService> { SpreadSheetService(get()) }
     single<SpreadSheetRepository> { SpreadSheetRepository(get()) }
 
     single<SheetsUseCase> { SheetsUseCase(get()) }

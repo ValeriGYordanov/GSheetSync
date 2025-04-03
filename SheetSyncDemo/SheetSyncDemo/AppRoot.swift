@@ -7,17 +7,31 @@
 //
 
 import SwiftUI
+import GoogleSignIn
+import shared
 
-// 1. First, define a root view that will control the switching
-struct AppRoot: View {
+@main
+struct SheetSyncDemoApp: App {
     @StateObject private var viewModel = SheetViewModelWrapper()
     @State private var showHome = false
     
-    var body: some View {
-        if showHome {
-            HomeScreen()
-        } else {
-            ContentView(viewModel: viewModel, showHome: $showHome)
+    init() {
+        KoinInitializerKt.doInitKoin()
+        // Initialize Google Sign-In
+        GIDSignIn.sharedInstance.restorePreviousSignIn { user, error in
+            if let error = error {
+                print("Error restoring previous sign-in: \(error.localizedDescription)")
+            }
+        }
+    }
+    
+    var body: some Scene {
+        WindowGroup {
+            if showHome {
+                HomeScreen(viewModel: viewModel)
+            } else {
+                SignInView(viewModel: viewModel, showHome: $showHome)
+            }
         }
     }
 }

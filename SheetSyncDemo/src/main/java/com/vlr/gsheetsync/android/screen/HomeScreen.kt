@@ -14,10 +14,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.vlr.gsheetsync.SyncLog
+import com.vlr.gsheetsync.feature.sheets.presentation.SheetViewModel
+import org.koin.androidx.compose.getViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    sheetViewModel: SheetViewModel = getViewModel()
+) {
     var editText1 by remember { mutableStateOf("") }
     var editText2 by remember { mutableStateOf("") }
 

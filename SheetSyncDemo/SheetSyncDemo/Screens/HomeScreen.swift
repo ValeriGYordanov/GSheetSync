@@ -1,6 +1,8 @@
 import SwiftUI
+import shared
 
 struct HomeScreen: View {
+    @ObservedObject var viewModel: SheetViewModelWrapper
     @State private var sheetId: String = ""
     @State private var sheetName: String = ""
     @State private var scrollOffset: CGFloat = 0
