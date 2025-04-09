@@ -4,8 +4,20 @@ import com.vlr.gsheetsync.feature.sheets.data.SpreadSheetRepository
 
 class SheetsUseCase(private val repository: SpreadSheetRepository) {
 
-    suspend fun initialiseSheets(accessToken: Any): Boolean {
+    fun setAccessToken(accessToken: String) {
+        repository.setAccessToken(accessToken)
+    }
+
+    fun setSpreadsheetId(sheetId: String) {
+        repository.setSpreadsheetId(sheetId)
+    }
+
+    suspend fun initialiseSheets(accessToken: Any): String {
         return repository.initialiseSheets(accessToken)
+    }
+
+    suspend fun addText() {
+        return repository.addText()
     }
 
 }

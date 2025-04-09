@@ -42,7 +42,7 @@ struct HomeScreen: View {
                     // Buttons
                     VStack(spacing: 8) {
                         Button(action: {
-                            // TODO: Implement sync action
+                            viewModel.sheetViewModel.addText()
                         }) {
                             Text("Sync Now")
                                 .fontWeight(.bold)

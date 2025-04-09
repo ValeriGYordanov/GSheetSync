@@ -11,11 +11,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.google.android.gms.auth.GoogleAuthUtil
+import com.google.android.gms.auth.UserRecoverableAuthException
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.api.services.sheets.v4.SheetsScopes
 import com.vlr.gsheetsync.SyncLog
 import com.vlr.gsheetsync.feature.sheets.presentation.SheetViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.getViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -26,8 +34,17 @@ fun HomeScreen(
     var editText1 by remember { mutableStateOf("") }
     var editText2 by remember { mutableStateOf("") }
 
+    val authLauncher = GoogleReAuthLauncher { token ->
+        if (token != null) {
+            // Save or update token
+        } else {
+            // Show error
+        }
+    }
+
     // Sample data for the list
     val items = List(10) { "Item ${it + 1}" }
+    val context = LocalContext.current
 
     Column(
         modifier = Modifier
@@ -109,7 +126,7 @@ fun HomeScreen(
 
                 // Buttons
                 Button(
-                    onClick = { /* TODO */ },
+                    onClick = { sheetViewModel.addText() },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),
@@ -121,7 +138,20 @@ fun HomeScreen(
                     Text("Sync Now", fontWeight = FontWeight.Bold)
                 }
                 OutlinedButton(
-                    onClick = { /* TODO */ },
+                    onClick = {
+                        val account = GoogleSignIn.getLastSignedInAccount(context)?.account
+                        if (account != null) {
+                            CoroutineScope(Dispatchers.IO).launch {
+                                try {
+                                    val token = GoogleAuthUtil.getToken(context, account, "oauth2:${SheetsScopes.SPREADSHEETS}")
+                                    sheetViewModel.initialiseService(token)
+                                } catch (e: UserRecoverableAuthException) {
+                                    authLauncher.launch(e.intent)
+                                }
+                            }
+
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),

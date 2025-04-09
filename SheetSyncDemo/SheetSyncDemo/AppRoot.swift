@@ -17,20 +17,30 @@ struct SheetSyncDemoApp: App {
     
     init() {
         KoinInitializerKt.doInitKoin()
-        // Initialize Google Sign-In
-        GIDSignIn.sharedInstance.restorePreviousSignIn { user, error in
-            if let error = error {
-                print("Error restoring previous sign-in: \(error.localizedDescription)")
-            }
-        }
     }
     
     var body: some Scene {
         WindowGroup {
-            if showHome {
-                HomeScreen(viewModel: viewModel)
-            } else {
-                SignInView(viewModel: viewModel, showHome: $showHome)
+            Group {
+                if showHome {
+                    HomeScreen(viewModel: viewModel)
+                } else {
+                    SignInView(viewModel: viewModel, showHome: $showHome)
+                }
+            }
+            .onAppear {
+                // Move the restoration check here
+                GIDSignIn.sharedInstance.restorePreviousSignIn { user, error in
+                    if error == nil && user != nil {
+                        DispatchQueue.main.async {
+                            print("User already logged in initialising with access token: \(String(describing: user!.accessToken.tokenString))")
+                            viewModel.sheetViewModel.initialiseService(accessToken: user!.accessToken.tokenString)
+                            showHome = true
+                        }
+                    } else {
+                        print("Error restoring previous sign in: \(String(describing: error))")
+                    }
+                }
             }
         }
     }

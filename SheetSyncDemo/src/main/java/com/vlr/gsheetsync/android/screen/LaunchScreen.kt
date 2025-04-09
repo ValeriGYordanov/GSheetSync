@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.google.android.gms.auth.GoogleAuthUtil
 import com.google.android.gms.auth.UserRecoverableAuthException
@@ -23,6 +24,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
+import com.google.android.gms.common.api.Scope
 import com.google.android.gms.tasks.Task
 import com.google.api.services.sheets.v4.SheetsScopes
 import com.google.auth.oauth2.AccessToken
@@ -31,6 +33,7 @@ import com.vlr.gsheetsync.feature.sheets.presentation.SheetViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.koin.androidx.compose.getViewModel
 
 @Composable
@@ -38,7 +41,9 @@ fun LaunchScreen(
     onConnectionSuccess: () -> Unit,
     sheetViewModel: SheetViewModel = getViewModel()
 ) {
+    val context = LocalContext.current
     val state = sheetViewModel.state.collectAsState()
+    val account = GoogleSignIn.getLastSignedInAccount(LocalContext.current)
 
     Box(
         modifier = Modifier
@@ -47,35 +52,60 @@ fun LaunchScreen(
             .padding(16.dp),
         contentAlignment = Alignment.Center
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Text(
-                text = "Google Sheets Sync",
-                style = MaterialTheme.typography.headlineMedium,
-                color = Color.White
-            )
+        if (account == null) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = "Google Sheets Sync",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = Color.White
+                )
 
-            GoogleSignInButton {
-                if (!state.value.loading) {
-                    if (it != null) {
-                        sheetViewModel.initialiseService(it)
-                    } else {
-                        SyncLog.print("FAIL:")
+                GoogleSignInButton {
+                    if (!state.value.loading) {
+                        if (it != null) {
+                            sheetViewModel.initialiseService(it.tokenValue)
+                        } else {
+                            SyncLog.print("FAIL:")
+                        }
                     }
                 }
-            }
 
-            if (!state.value.error.isNullOrEmpty()) {
+                if (!state.value.error.isNullOrEmpty()) {
+                    Text(
+                        text = state.value.error!!,
+                        color = Color(0xFFE57373),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
                 Text(
-                    text = state.value.error!!,
-                    color = Color(0xFFE57373),
-                    style = MaterialTheme.typography.bodyMedium
+                    text = "${account.givenName}, Welcome to Google Sheets Sync",
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = Color.White
                 )
+                Text(
+                    text = "Please wait while we fetch your data...",
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White
+                )
+                CircularProgressIndicator()
+
             }
         }
     }
@@ -83,6 +113,19 @@ fun LaunchScreen(
     LaunchedEffect(state.value) {
         if (state.value.success != null) {
             onConnectionSuccess()
+        } else {
+            sheetViewModel.scope.launch {
+                withContext(Dispatchers.IO) {
+                    account?.account?.let { acc ->
+                        val accessToken = GoogleAuthUtil.getToken(
+                            context,
+                            acc,
+                            "oauth2:${SheetsScopes.SPREADSHEETS}"
+                        )
+                        sheetViewModel.setAccessToken(accessToken)
+                    }
+                }
+            }
         }
     }
 }
@@ -111,6 +154,7 @@ fun GoogleSignInButton(onSignInResult: (AccessToken?) -> Unit) {
     val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
         .requestIdToken("595545246834-hmekg2rbs9jgoc4v1pi7cim7banredo8.apps.googleusercontent.com") // Your Client ID from Google Cloud Console
         .requestEmail()
+        .requestScopes(Scope(SheetsScopes.SPREADSHEETS))
         .build()
 
     val googleSignInClient = GoogleSignIn.getClient(context, gso)
