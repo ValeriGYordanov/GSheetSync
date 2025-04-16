@@ -1,4 +1,5 @@
 package com.vlr.gsheetsync.feature.sheets.domain.model
 
-class SyncSheet {
+interface IGSyncError {
+    var description: String
 }

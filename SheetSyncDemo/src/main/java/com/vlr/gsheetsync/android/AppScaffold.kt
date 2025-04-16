@@ -34,7 +34,7 @@ fun AppScaffold() {
 fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) {
     val account = GoogleSignIn.getLastSignedInAccount(LocalContext.current)
     // The StartDestination here is not complete! We should setup the Library Service if account is not null
-    val startDestination = if (false) Screen.HOME.route else Screen.LAUNCHER.route
+    val startDestination = Screen.LAUNCHER.route
     NavHost(navController = navController, startDestination = startDestination, modifier = modifier) {
         composable(Screen.LAUNCHER.route) {
             LaunchScreen(

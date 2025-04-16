@@ -29,6 +29,7 @@ import com.google.android.gms.tasks.Task
 import com.google.api.services.sheets.v4.SheetsScopes
 import com.google.auth.oauth2.AccessToken
 import com.vlr.gsheetsync.SyncLog
+import com.vlr.gsheetsync.feature.sheets.domain.model.GSyncResult
 import com.vlr.gsheetsync.feature.sheets.presentation.SheetViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -36,13 +37,20 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.androidx.compose.getViewModel
 
+var additionalInfoText = "Authorizing Google Sheets..."
+
 @Composable
 fun LaunchScreen(
     onConnectionSuccess: () -> Unit,
     sheetViewModel: SheetViewModel = getViewModel()
 ) {
     val context = LocalContext.current
-    val state = sheetViewModel.state.collectAsState()
+    val errorState = sheetViewModel.errorState.collectAsState()
+    val loadingState = sheetViewModel.loadingState.collectAsState()
+
+    val accessTokenState = sheetViewModel.setAccessTokenState.collectAsState()
+    val spreadSheetIdState = sheetViewModel.setSpreadsheetIdState.collectAsState()
+
     val account = GoogleSignIn.getLastSignedInAccount(LocalContext.current)
 
     Box(
@@ -67,18 +75,18 @@ fun LaunchScreen(
                 )
 
                 GoogleSignInButton {
-                    if (!state.value.loading) {
+                    if (!loadingState.value?.loading!!) {
                         if (it != null) {
-                            sheetViewModel.initialiseService(it.tokenValue)
+                            sheetViewModel.setAccessToken(it.tokenValue)
                         } else {
                             SyncLog.print("FAIL:")
                         }
                     }
                 }
 
-                if (!state.value.error.isNullOrEmpty()) {
+                if (errorState.value?.message?.description?.isNotEmpty() == true) {
                     Text(
-                        text = state.value.error!!,
+                        text = errorState.value?.message?.description?:"Unknown Client Side Error",
                         color = Color(0xFFE57373),
                         style = MaterialTheme.typography.bodyMedium
                     )
@@ -104,15 +112,21 @@ fun LaunchScreen(
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White
                 )
+                Text(
+                    text = additionalInfoText,
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.Gray
+                )
                 CircularProgressIndicator()
-
             }
         }
     }
 
-    LaunchedEffect(state.value) {
-        if (state.value.success != null) {
-            onConnectionSuccess()
+    LaunchedEffect(accessTokenState.value) {
+        if (accessTokenState.value is GSyncResult.Success) {
+            additionalInfoText = "Setting up the Spreadsheet ..."
+            sheetViewModel.setSpreadsheetId("https://docs.google.com/spreadsheets/d/1px0triZ-w_8UH122HDSNjbAHJf1LAMi6s92twPJP2_0/edit")
         } else {
             sheetViewModel.scope.launch {
                 withContext(Dispatchers.IO) {
@@ -126,6 +140,12 @@ fun LaunchScreen(
                     }
                 }
             }
+        }
+    }
+
+    LaunchedEffect(spreadSheetIdState.value) {
+        if (spreadSheetIdState.value is GSyncResult.Success) {
+            onConnectionSuccess()
         }
     }
 }

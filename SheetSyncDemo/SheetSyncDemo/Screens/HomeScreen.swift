@@ -7,8 +7,9 @@ struct HomeScreen: View {
     @State private var sheetName: String = ""
     @State private var scrollOffset: CGFloat = 0
     
-    // Sample data for the list
-    let items = (1...10).map { "Item \($0)" }
+    @State private var isLoading = false
+    @State private var errorMessage: String?
+    @State private var items: NSDictionary = [:]
     
     var body: some View {
         ScrollView {
@@ -31,10 +32,10 @@ struct HomeScreen: View {
                     
                     // Input fields
                     VStack(spacing: 12) {
-                        TextField("Enter Sheet ID", text: $sheetId)
+                        TextField("Enter Value For A2", text: $sheetId)
                             .textFieldStyle(HomeTextFieldStyle())
                         
-                        TextField("Enter Sheet Name", text: $sheetName)
+                        TextField("Enter Value For B2", text: $sheetName)
                             .textFieldStyle(HomeTextFieldStyle())
                     }
                     .padding(.vertical, 8)
@@ -42,7 +43,10 @@ struct HomeScreen: View {
                     // Buttons
                     VStack(spacing: 8) {
                         Button(action: {
-                            viewModel.sheetViewModel.addText()
+                            viewModel.sheetViewModel.updateData(updates: [
+                                "A2": sheetId,
+                                "B2": sheetName
+                            ])
                         }) {
                             Text("Sync Now")
                                 .fontWeight(.bold)
@@ -68,9 +72,9 @@ struct HomeScreen: View {
                         }
                         
                         Button(action: {
-                            // TODO: Implement settings action
+                            viewModel.sheetViewModel.getData(from: "A1", to: "G10")
                         }) {
-                            Text("Settings")
+                            Text("Get Data")
                                 .fontWeight(.bold)
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 50)
@@ -85,28 +89,70 @@ struct HomeScreen: View {
                 
                 // List Section
                 VStack(spacing: 8) {
-                    ForEach(items, id: \.self) { item in
-                        HStack {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(item)
-                                    .font(.headline)
-                                    .foregroundColor(.white)
-                                
-                                Text("Supporting text for \(item)")
-                                    .font(.subheadline)
-                                    .foregroundColor(.gray)
-                            }
-                            Spacer()
+                    if isLoading {
+                        VStack {
+                            Text("Loading data...")
+                                .padding(10)
+                                .font(.footnote)
+                            ProgressView()
+                                .scaleEffect(2)
                         }
-                        .padding(12)
-                        .background(Color(red: 0.18, green: 0.18, blue: 0.18))
-                        .cornerRadius(12)
+                    } else if let error = errorMessage {
+                        Text("Error: \(error)")
+                            .foregroundColor(.red)
+                            .padding()
+                    } else {
+                        ForEach(Array(items.allKeys.compactMap { $0 as? String }), id: \.self) { key in
+                            if let value = items[key] {
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(key)
+                                            .font(.headline)
+                                            .foregroundColor(.white)
+                                        
+                                        Text("\(value)")
+                                            .font(.subheadline)
+                                            .foregroundColor(.gray)
+                                    }
+                                    Spacer()
+                                }
+                                .padding(12)
+                                .background(Color(red: 0.18, green: 0.18, blue: 0.18))
+                                .cornerRadius(12)
+                            }
+                        }
                     }
                 }
                 .padding(16)
             }
         }
         .background(Color(red: 0.1, green: 0.1, blue: 0.1).edgesIgnoringSafeArea(.all))
+        .onAppear {
+            viewModel.startObserving()
+            viewModel.sheetViewModel.getData(from: "A1", to: "G10")
+        }
+        .onChange(of: viewModel.loadingState) { _, newValue in
+            isLoading = newValue?.loading ?? false
+            SyncLog().print(message: "NewValue Loading: \(isLoading)")
+        }
+        .onChange(of: viewModel.errorState) { _, newValue in
+            errorMessage = newValue?.description
+            SyncLog().print(message: "NewValue Error: \(errorMessage ?? "No Error")")
+        }
+        .onChange(of: viewModel.getDataState) { _, newValue in
+            SyncLog().print(message: "NewValue V: \(newValue?.description ?? "No Value")")
+            handleDataState(state: newValue)
+        }
+    }
+    
+    private func handleDataState(state: GSyncResult<NSDictionary>?) {
+        guard let state = state else { return }
+        
+        if let success = state as? GSyncResultSuccess<NSDictionary> {
+            items = success.data ?? [:]
+            errorMessage = nil
+            isLoading = false
+        }
     }
 }
 

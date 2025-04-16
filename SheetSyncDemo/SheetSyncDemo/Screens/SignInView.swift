@@ -5,7 +5,6 @@ import shared
 struct SignInView: View {
     @ObservedObject var viewModel: SheetViewModelWrapper
     @StateObject private var authService = GoogleAuthService()
-    @Binding var showHome: Bool
     
     var body: some View {
         NavigationStack {
@@ -23,7 +22,7 @@ struct SignInView: View {
                     }.onAppear {
                         // Initialize service when signed in
                         if let idToken = authService.user?.accessToken.tokenString {
-                            viewModel.sheetViewModel.initialiseService(accessToken: idToken)
+                            viewModel.sheetViewModel.setAccessToken(accessToken: idToken)
                         }
                     }
                 } else {
