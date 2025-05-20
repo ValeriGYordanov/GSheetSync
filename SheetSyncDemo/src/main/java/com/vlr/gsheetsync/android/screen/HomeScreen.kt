@@ -19,17 +19,19 @@ import com.google.android.gms.auth.GoogleAuthUtil
 import com.google.android.gms.auth.UserRecoverableAuthException
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.api.services.sheets.v4.SheetsScopes
-import com.vlr.gsheetsync.SyncLog
 import com.vlr.gsheetsync.feature.sheets.domain.model.GSyncResult
+import com.vlr.gsheetsync.feature.sheets.engine.SSEngine
 import com.vlr.gsheetsync.feature.sheets.presentation.SheetViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.getViewModel
+import org.koin.compose.getKoin
 
 @Composable
 fun HomeScreen(
-    sheetViewModel: SheetViewModel = getViewModel()
+    sheetViewModel: SheetViewModel = getViewModel(),
+    ssEngine: SSEngine = getKoin().get()
 ) {
     var editText1 by remember { mutableStateOf("") }
     var editText2 by remember { mutableStateOf("") }
@@ -44,11 +46,17 @@ fun HomeScreen(
 
     val loadingState = sheetViewModel.loadingState.collectAsState()
     val dataState = sheetViewModel.getDataState.collectAsState()
+
     val items = if (dataState.value is GSyncResult.Success && dataState.value != null) {
         (dataState.value as GSyncResult.Success).data
     } else {
         mapOf()
     }
+
+    LaunchedEffect("onLaunch") {
+        sheetViewModel.getData("A1", "G10")
+    }
+
     val context = LocalContext.current
 
     Column(
@@ -132,10 +140,21 @@ fun HomeScreen(
 
                 // Buttons
                 Button(
-                    onClick = { sheetViewModel.updateData(mapOf(
-                        "A1" to editText1,
-                        "B1" to editText2
-                    )) },
+//                    onClick = { sheetViewModel.updateData(mapOf(
+//                        "A1" to editText1,
+//                        "B1" to editText2
+//                    )) },
+                    onClick = {
+
+                        CoroutineScope(Dispatchers.IO).launch {
+                            ssEngine.updateData(
+                                mapOf(
+                                    "A1" to editText1,
+                                    "B1" to editText2
+                                )
+                            )
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),
@@ -152,7 +171,11 @@ fun HomeScreen(
                         if (account != null) {
                             CoroutineScope(Dispatchers.IO).launch {
                                 try {
-                                    val token = GoogleAuthUtil.getToken(context, account, "oauth2:${SheetsScopes.SPREADSHEETS}")
+                                    val token = GoogleAuthUtil.getToken(
+                                        context,
+                                        account,
+                                        "oauth2:${SheetsScopes.SPREADSHEETS}"
+                                    )
                                     sheetViewModel.setAccessToken(token)
                                 } catch (e: UserRecoverableAuthException) {
                                     authLauncher.launch(e.intent)
