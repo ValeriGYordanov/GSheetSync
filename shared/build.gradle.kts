@@ -1,10 +1,23 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
+
+val localProperties = Properties().apply {
+    val localFile = rootProject.file("local.properties")
+    if (localFile.exists()) {
+        localFile.inputStream().use { load(it) }
+    }
+}
+
+val gprUser = localProperties.getProperty("gpr.user") ?: System.getenv("USERNAME")
+val gprKey = localProperties.getProperty("gpr.key") ?: System.getenv("TOKEN")
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.kotlinCocoapods)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.skie)
     alias(libs.plugins.kotlinx.serialization)
+    id("maven-publish")
 }
 
 kotlin {
@@ -17,18 +30,21 @@ kotlin {
             }
         }
     }
-    
-    listOf(
-        iosX64(),
-        iosArm64(),
-        iosSimulatorArm64()
-    ).forEach {
-        it.binaries.framework {
-            baseName = "shared"
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
+
+    cocoapods {
+        summary = "Some description for the Shared Module"
+        homepage = "Link to the Shared Module homepage"
+        version = "1.0"
+        ios.deploymentTarget = "16.0"
+        framework {
+            baseName = "GSheetSync"
             isStatic = true
         }
     }
-
+    
     sourceSets {
         commonMain.dependencies {
             implementation(libs.kotlinx.coroutines.core)
@@ -37,17 +53,14 @@ kotlin {
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.koin.core)
-            implementation(libs.sql.coroutines.extensions)
         }
         androidMain.dependencies {
             implementation(libs.androidx.lifecycle.viewmodel.ktx)
             implementation(libs.ktor.client.android)
-            implementation(libs.sql.android.driver)
             api(libs.google.api.services.sheets)
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
-            implementation(libs.sql.native.driver)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -64,5 +77,31 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
+    }
+}
+
+publishing {
+    publications {
+        withType<MavenPublication>().all {
+            groupId = "com.github.ValeriGYordanov"
+            artifactId = "gsheetsync"
+            version = "1.0.0"
+        }
+
+        // ✅ Only publish the unified multiplatform publication
+        maybeCreate("kotlinMultiplatform").apply {
+            // Optionally customize further here
+        }
+    }
+
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/ValeriGYordanov/GSheetSync")
+            credentials {
+                username = gprUser
+                password = gprKey
+            }
+        }
     }
 }
