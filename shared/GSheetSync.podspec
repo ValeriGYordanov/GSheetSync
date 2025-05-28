@@ -1,11 +1,11 @@
 Pod::Spec.new do |spec|
-    spec.name                     = 'shared'
-    spec.version                  = '1.0'
-    spec.homepage                 = 'Link to the Shared Module homepage'
+    spec.name                     = 'GSheetSync'
+    spec.version                  = '1.0.0'
+    spec.homepage                 = 'https://github.com/ValeriGYordanov/GSheetSync'
     spec.source                   = { :http=> ''}
     spec.authors                  = ''
     spec.license                  = ''
-    spec.summary                  = 'Some description for the Shared Module'
+    spec.summary                  = 'Utilise Google Sheets API with KMP'
     spec.vendored_frameworks      = 'build/cocoapods/framework/GSheetSync.framework'
     spec.libraries                = 'c++'
     spec.ios.deployment_target    = '16.0'
@@ -33,7 +33,7 @@ Pod::Spec.new do |spec|
                 
     spec.script_phases = [
         {
-            :name => 'Build shared',
+            :name => 'Build GSheetSync',
             :execution_position => :before_compile,
             :shell_path => '/bin/sh',
             :script => <<-SCRIPT

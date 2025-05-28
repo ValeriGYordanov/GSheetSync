@@ -1,5 +1,6 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
+import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 
 val localProperties = Properties().apply {
     val localFile = rootProject.file("local.properties")
@@ -35,13 +36,15 @@ kotlin {
     iosSimulatorArm64()
 
     cocoapods {
-        summary = "Some description for the Shared Module"
-        homepage = "Link to the Shared Module homepage"
-        version = "1.0"
+        version = "1.0.0"
+        summary = "Utilise Google Sheets API with KMP"
+        homepage = "https://github.com/ValeriGYordanov/GSheetSync"
+        name = "GSheetSync"
+
         ios.deploymentTarget = "16.0"
         framework {
             baseName = "GSheetSync"
-            isStatic = true
+            isStatic = false
         }
     }
     
@@ -102,6 +105,22 @@ publishing {
                 username = gprUser
                 password = gprKey
             }
+        }
+    }
+}
+
+kotlin {
+    val frameworkName = "GSheetSync"
+    val xcf = XCFramework(frameworkName)
+
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
+
+    targets.withType<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget>().configureEach {
+        binaries.framework {
+            baseName = frameworkName
+            xcf.add(this)
         }
     }
 }
