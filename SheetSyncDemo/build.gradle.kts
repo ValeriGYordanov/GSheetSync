@@ -34,6 +34,11 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+
+    packaging {
+        resources.excludes += "META-INF/INDEX.LIST"
+        resources.excludes += "META-INF/DEPENDENCIES"
+    }
 }
 
 dependencies {
@@ -42,5 +47,21 @@ dependencies {
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.material3)
     implementation(libs.androidx.activity.compose)
+    debugImplementation(libs.compose.ui.tooling)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.coil.compose)
+    implementation(libs.compose.ui)
+    implementation(libs.compose.ui.tooling.preview)
+    implementation(libs.compose.material3)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.koin.android)
+    implementation(libs.koin.androidx.compose)
+    implementation(libs.acompanist.swiperefresh)
+
+    implementation("androidx.credentials:credentials:1.5.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
+    implementation("com.google.android.gms:play-services-auth:21.0.0")
+
+    implementation(libs.google.api.services.sheets)
     debugImplementation(libs.compose.ui.tooling)
 }
