@@ -92,4 +92,46 @@ expect class SSEngine(spreadsheetService: SpreadSheetService) {
      * @throws IllegalArgumentException for invalid cell references or blank values
      */
     suspend fun updateData(updates: Map<String, String>): String?
+
+    /**
+     * Inserts a new row at the specified index in a sheet.
+     *
+     * @param rowIndex The index where the new row should be inserted
+     * @return JSON representation of the API response or null if request fails
+     */
+    suspend fun insertRow(rowIndex: Int): JsonElement?
+
+    /**
+     * Deletes a row at the specified index in a sheet.
+     *
+     * @param rowIndex The index of the row to delete
+     * @return JSON representation of the API response or null if request fails
+     */
+    suspend fun deleteRow(rowIndex: Int): JsonElement?
+
+    /**
+     * Inserts a new column at the specified index in a sheet.
+     *
+     * @param columnIndex The index where the new column should be inserted
+     * @return JSON representation of the API response or null if request fails
+     */
+    suspend fun insertColumn(columnIndex: Int): JsonElement?
+
+    /**
+     * Deletes a column at the specified index in a sheet.
+     *
+     * @param columnIndex The index of the column to delete
+     * @return JSON representation of the API response or null if request fails
+     */
+    suspend fun deleteColumn(columnIndex: Int): JsonElement?
+
+    /**
+     * Clears the content of a specific cell in the configured sheet.
+     *
+     * @param cell The cell reference in A1 notation (e.g., "A1")
+     * @return Empty string on success
+     * @throws IllegalArgumentException if cell reference is invalid
+     */
+    suspend fun clearCell(cell: String): String?
+
 }

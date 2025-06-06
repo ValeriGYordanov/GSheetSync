@@ -1,4 +1,7 @@
 package com.vlr.gsheetsync.feature.sheets.data.model
 
-class SheetConfig {
-}
+data class SheetConfig(
+    val token: String,
+    val spreadsheetId: String,
+    val sheetName: String
+)

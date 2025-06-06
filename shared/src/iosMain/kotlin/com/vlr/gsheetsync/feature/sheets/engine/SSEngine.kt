@@ -216,6 +216,110 @@ actual class SSEngine actual constructor(
         }, completion)
     }
 
+    /**
+     * Inserts a new row at the specified index in a sheet.
+     *
+     * @param rowIndex The index where the new row should be inserted
+     * @param dispatcher The coroutine context to execute in (default: DEFAULT)
+     * @param completion Callback with:
+     *   - First parameter: JSON representation of the API response or null if request fails
+     *   - Second parameter: Error message string on failure
+     * @note Fails silently if sheet doesn't exist
+     */
+    fun insertRow(
+        rowIndex: Int,
+        dispatcher: DispatcherOption = DispatcherOption.DEFAULT,
+        completion: (JsonElement?, String?) -> Unit
+    ) {
+        safeCall(dispatcher, {
+            insertRow(rowIndex)
+        }, completion)
+    }
+
+    /**
+     * Deletes a row at the specified index in a sheet.
+     *
+     * @param rowIndex The index of the row to delete
+     * @param dispatcher The coroutine context to execute in (default: DEFAULT)
+     * @param completion Callback with:
+     *   - First parameter: JSON representation of the API response or null if request fails
+     *   - Second parameter: Error message string on failure
+     *
+     * @note Fails silently if sheet doesn't exist
+     */
+    fun deleteRow(
+        rowIndex: Int,
+        dispatcher: DispatcherOption = DispatcherOption.DEFAULT,
+        completion: (JsonElement?, String?) -> Unit
+    ) {
+        safeCall(dispatcher, {
+            deleteRow(rowIndex)
+        }, completion)
+    }
+
+    /**
+     * Inserts a new column at the specified index in a sheet.
+     *
+     * @param columnIndex The index where the new column should be inserted
+     * @param dispatcher The coroutine context to execute in (default: DEFAULT)
+     * @param completion Callback with:
+     *   - First parameter: JSON representation of the API response or null if request fails
+     *   - Second parameter: Error message string on failure
+     *
+     * @note Fails silently if sheet doesn't exist
+     */
+    fun insertColumn(
+        columnIndex: Int,
+        dispatcher: DispatcherOption = DispatcherOption.DEFAULT,
+        completion: (JsonElement?, String?) -> Unit
+    ) {
+        safeCall(dispatcher, {
+            insertColumn(columnIndex)
+        },completion)
+    }
+
+    /**
+     * Deletes a column at the specified index in a sheet.
+     *
+     * @param columnIndex The index of the column to delete
+     * @param dispatcher The coroutine context to execute in (default: DEFAULT)
+     * @param completion Callback with:
+     *   - First parameter: JSON representation of the API response or null if request fails
+     *   - Second parameter: Error message string on failure
+     *
+     * @note Fails silently if sheet doesn't exist
+     */
+    fun deleteColumn(
+        columnIndex: Int,
+        dispatcher: DispatcherOption = DispatcherOption.DEFAULT,
+        completion: (JsonElement?, String?) -> Unit
+    ) {
+        safeCall(dispatcher, {
+            deleteColumn(columnIndex)
+        }, completion)
+    }
+
+    /**
+     * Clears the content of a specific cell in the configured sheet.
+     *
+     * @param cell The cell reference in A1 notation (e.g., "A1")
+     * @param dispatcher The coroutine context to execute in (default: DEFAULT)
+     * @param completion Callback with:
+     *   - First parameter: Empty string on success
+     *   - Second parameter: Error message string on failure
+     *
+     * @throws IllegalArgumentException if cell reference is invalid
+     */
+    fun clearCell(
+        cell: String,
+        dispatcher: DispatcherOption = DispatcherOption.DEFAULT,
+        completion: (String?, String?) -> Unit
+    ) {
+        safeCall(dispatcher, {
+            clearCell(cell)
+        }, completion)
+    }
+
     //--------------------------------------------------
     // Actual methods
     //--------------------------------------------------
@@ -323,6 +427,58 @@ actual class SSEngine actual constructor(
      */
     actual suspend fun updateData(updates: Map<String, String>): String? {
         return spreadsheetService.updateData(updates)
+    }
+
+
+    /**
+     * Inserts a new row at the specified index in a sheet.
+     *
+     * @param rowIndex The index where the new row should be inserted
+     * @return JSON representation of the API response or null if request fails
+     */
+    actual suspend fun insertRow(rowIndex: Int): JsonElement? {
+        return spreadsheetService.insertRow(rowIndex)
+    }
+
+    /**
+     * Deletes a row at the specified index in a sheet.
+     *
+     * @param rowIndex The index of the row to delete
+     * @return JSON representation of the API response or null if request fails
+     */
+    actual suspend fun deleteRow(rowIndex: Int): JsonElement? {
+        return spreadsheetService.deleteRow(rowIndex)
+    }
+
+    /**
+     * Inserts a new column at the specified index in a sheet.
+     *
+     * @param columnIndex The index where the new column should be inserted
+     * @return JSON representation of the API response or null if request fails
+     */
+    actual suspend fun insertColumn(columnIndex: Int): JsonElement? {
+        return spreadsheetService.insertColumn(columnIndex)
+    }
+
+    /**
+     * Deletes a column at the specified index in a sheet.
+     *
+     * @param columnIndex The index of the column to delete
+     * @return JSON representation of the API response or null if request fails
+     */
+    actual suspend fun deleteColumn(columnIndex: Int): JsonElement? {
+        return spreadsheetService.deleteColumn(columnIndex)
+    }
+
+    /**
+     * Clears the content of a specific cell in the configured sheet.
+     *
+     * @param cell The cell reference in A1 notation (e.g., "A1")
+     * @return Empty string on success
+     * @throws IllegalArgumentException if cell reference is invalid
+     */
+    actual suspend fun clearCell(cell: String): String? {
+        return spreadsheetService.clearCell(cell)
     }
 
     //--------------------------------------------------

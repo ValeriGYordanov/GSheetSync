@@ -139,6 +139,57 @@ actual class SSEngine actual constructor(
     }
 
     /**
+     * Inserts a new row at the specified index in a sheet.
+     *
+     * @param rowIndex The index where the new row should be inserted
+     * @return JSON representation of the API response or null if request fails
+     */
+    actual suspend fun insertRow(rowIndex: Int): JsonElement? = safeCall {
+        spreadsheetService.insertRow(rowIndex)
+    }
+
+    /**
+     * Deletes a row at the specified index in a sheet.
+     *
+     * @param rowIndex The index of the row to delete
+     * @return JSON representation of the API response or null if request fails
+     */
+    actual suspend fun deleteRow(rowIndex: Int): JsonElement? = safeCall {
+        spreadsheetService.deleteRow(rowIndex)
+    }
+
+    /**
+     * Inserts a new column at the specified index in a sheet.
+     *
+     * @param columnIndex The index where the new column should be inserted
+     * @return JSON representation of the API response or null if request fails
+     */
+    actual suspend fun insertColumn(columnIndex: Int): JsonElement? = safeCall {
+        spreadsheetService.insertColumn(columnIndex)
+    }
+
+    /**
+     * Deletes a column at the specified index in a sheet.
+     *
+     * @param columnIndex The index of the column to delete
+     * @return JSON representation of the API response or null if request fails
+     */
+    actual suspend fun deleteColumn(columnIndex: Int): JsonElement? = safeCall {
+        spreadsheetService.deleteColumn(columnIndex)
+    }
+
+    /**
+     * Clears the content of a specific cell in the configured sheet.
+     *
+     * @param cell The cell reference in A1 notation (e.g., "A1")
+     * @return Empty string on success
+     * @throws IllegalArgumentException if cell reference is invalid
+     */
+    actual suspend fun clearCell(cell: String): String? = safeCall {
+        spreadsheetService.clearCell(cell)
+    }
+
+    /**
      * Unified safe execution wrapper for all operations.
      * Handles:
      * - Loading state transitions

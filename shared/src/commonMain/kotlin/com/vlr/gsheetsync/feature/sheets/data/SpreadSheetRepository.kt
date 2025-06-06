@@ -1,6 +1,8 @@
 package com.vlr.gsheetsync.feature.sheets.data
 
 import com.vlr.gsheetsync.feature.sheets.data.model.SheetSyncResponseModels
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 
 class SpreadSheetRepository(private val service: SpreadSheetService) {
@@ -19,7 +21,8 @@ class SpreadSheetRepository(private val service: SpreadSheetService) {
     }
 
     suspend fun getSpreadsheet(googleSheetsUrl: String? = null): SheetSyncResponseModels.Spreadsheet? {
-        return service.getSpreadsheet(googleSheetsUrl)
+        val result = service.getSpreadsheet(googleSheetsUrl)
+        return Json.decodeFromString<SheetSyncResponseModels.Spreadsheet>(result.toString())
     }
 
     suspend fun createSheet(sheetTitle: String): Boolean {
@@ -33,7 +36,8 @@ class SpreadSheetRepository(private val service: SpreadSheetService) {
     }
 
     suspend fun getSheet(sheetTitle: String): SheetSyncResponseModels.Sheet? {
-        return service.getSheet(sheetTitle)
+        val result = service.getSheet(sheetTitle)
+        return Json.decodeFromString<SheetSyncResponseModels.Sheet>(result.toString())
     }
 
     suspend fun getData(from: String, to: String = from): Map<String, String> {
