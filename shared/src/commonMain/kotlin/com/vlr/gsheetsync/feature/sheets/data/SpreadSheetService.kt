@@ -199,6 +199,138 @@ class SpreadSheetService(private val client: HttpClient) {
         }.bodyAsText()
     }
 
+    suspend fun clearCell(cell: String): String {
+        require(cell.isValidCellReference()) {
+            "Invalid cell reference: '$cell'. Must be in A1 notation (e.g., 'B3')"
+        }
+
+        val range = "$sheetName!$cell"
+        return client.post("$BASE_URL/$spreadsheetId/values/$range:clear") {
+            contentType(ContentType.Application.Json)
+            bearerAuth(token)
+            setBody("{}")
+        }.bodyAsText()
+    }
+
+    suspend fun clearCells(range: String): String {
+        require(range.matches(Regex("""^[A-Z]+\d+(:[A-Z]+\d+)?$"""))) {
+            "Invalid range: '$range'. Must be in A1 notation (e.g., 'A1:A10' or 'B2:D4')"
+        }
+
+        val fullRange = "$sheetName!$range"
+        return client.post("$BASE_URL/$spreadsheetId/values/$fullRange:clear") {
+            contentType(ContentType.Application.Json)
+            bearerAuth(token)
+            setBody("{}")
+        }.bodyAsText()
+    }
+
+    //endregion
+
+    //region Row & Column Operations
+
+    suspend fun insertRow(sheetId: Int, rowIndex: Int): String {
+        require(rowIndex >= 0) { "Row index must be non-negative" }
+
+        val body = mapOf(
+            "requests" to listOf(
+                mapOf(
+                    "insertDimension" to mapOf(
+                        "range" to mapOf(
+                            "sheetId" to sheetId,
+                            "dimension" to "ROWS",
+                            "startIndex" to rowIndex,
+                            "endIndex" to rowIndex + 1
+                        ),
+                        "inheritFromBefore" to false
+                    )
+                )
+            )
+        )
+
+        return client.post("$BASE_URL/$spreadsheetId:batchUpdate") {
+            contentType(ContentType.Application.Json)
+            bearerAuth(token)
+            setBody(body)
+        }.bodyAsText()
+    }
+
+    suspend fun deleteRow(rowIndex: Int): String {
+        require(rowIndex >= 0) { "Row index must be non-negative" }
+
+        val body = mapOf(
+            "requests" to listOf(
+                mapOf(
+                    "deleteDimension" to mapOf(
+                        "range" to mapOf(
+                            "sheetId" to spreadsheetId,
+                            "dimension" to "ROWS",
+                            "startIndex" to rowIndex,
+                            "endIndex" to rowIndex + 1
+                        )
+                    )
+                )
+            )
+        )
+
+        return client.post("$BASE_URL/$spreadsheetId:batchUpdate") {
+            contentType(ContentType.Application.Json)
+            bearerAuth(token)
+            setBody(body)
+        }.bodyAsText()
+    }
+
+    suspend fun insertColumn(sheetId: Int, columnIndex: Int): String {
+        require(columnIndex >= 0) { "Column index must be non-negative" }
+
+        val body = mapOf(
+            "requests" to listOf(
+                mapOf(
+                    "insertDimension" to mapOf(
+                        "range" to mapOf(
+                            "sheetId" to sheetId,
+                            "dimension" to "COLUMNS",
+                            "startIndex" to columnIndex,
+                            "endIndex" to columnIndex + 1
+                        ),
+                        "inheritFromBefore" to false
+                    )
+                )
+            )
+        )
+
+        return client.post("$BASE_URL/$spreadsheetId:batchUpdate") {
+            contentType(ContentType.Application.Json)
+            bearerAuth(token)
+            setBody(body)
+        }.bodyAsText()
+    }
+
+    suspend fun deleteColumn(sheetId: Int, columnIndex: Int): String {
+        require(columnIndex >= 0) { "Column index must be non-negative" }
+
+        val body = mapOf(
+            "requests" to listOf(
+                mapOf(
+                    "deleteDimension" to mapOf(
+                        "range" to mapOf(
+                            "sheetId" to sheetId,
+                            "dimension" to "COLUMNS",
+                            "startIndex" to columnIndex,
+                            "endIndex" to columnIndex + 1
+                        )
+                    )
+                )
+            )
+        )
+
+        return client.post("$BASE_URL/$spreadsheetId:batchUpdate") {
+            contentType(ContentType.Application.Json)
+            bearerAuth(token)
+            setBody(body)
+        }.bodyAsText()
+    }
+
     //endregion
 
     //region Private Helper Functions

@@ -23,6 +23,7 @@ plugins {
 
 kotlin {
     androidTarget {
+        publishLibraryVariants("release")
         compilations.all {
             compileTaskProvider.configure {
                 compilerOptions {
@@ -81,20 +82,28 @@ android {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
+
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+            withJavadocJar()
+        }
+    }
 }
 
 publishing {
     publications {
-        withType<MavenPublication>().all {
-            groupId = "com.github.ValeriGYordanov"
+        // Only configure Android publication
+        create<MavenPublication>("androidReleaseAar") {
+            groupId = "com.github.vlr"
             artifactId = "gsheetsync"
             version = "1.0.0"
-        }
 
-        // ✅ Only publish the unified multiplatform publication
-        maybeCreate("kotlinMultiplatform").apply {
-            // Optionally customize further here
+            afterEvaluate {
+                from(components.findByName("androidRelease") ?: components["release"])
+            }
         }
+        // Don't configure other publications
     }
 
     repositories {
