@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
     spec.name                     = 'GSheetSync'
-    spec.version                  = '1.0.0'
+    spec.version                  = '1.0.1'
     spec.homepage                 = 'https://github.com/ValeriGYordanov/GSheetSync'
     spec.source                   = { :http=> ''}
     spec.authors                  = ''
