@@ -3,6 +3,7 @@ package com.vlr.gsheetsync.feature.sheets.data
 import com.vlr.gsheetsync.feature.sheets.data.model.SheetSyncResponseModels
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 
 
 class SpreadSheetRepository(private val service: SpreadSheetService) {
@@ -42,6 +43,37 @@ class SpreadSheetRepository(private val service: SpreadSheetService) {
 
     suspend fun getData(from: String, to: String = from): Map<String, String> {
         return service.getData(from, to)
+    }
+
+    suspend fun clearCell(cell: String): Boolean {
+        val result = service.clearCell(cell)
+        return result.isEmpty()
+    }
+
+    suspend fun protectSheet(sheetTitle: String? = null): Boolean {
+        val result = service.protectSheet(sheetTitle)
+        return result != null
+    }
+
+    suspend fun protectAllSheets(): Boolean {
+        val result = service.protectAllSheets()
+        return result != null
+    }
+
+    suspend fun insertRow(index: Int): JsonElement? {
+        return service.insertRow(index)
+    }
+
+    suspend fun deleteRow(index: Int): JsonElement? {
+        return service.deleteRow(index)
+    }
+
+    suspend fun insertColumn(index: Int): JsonElement? {
+        return service.insertColumn(index)
+    }
+
+    suspend fun deleteColumn(index: Int): JsonElement? {
+        return service.deleteColumn(index)
     }
 
     suspend fun updateData(updates: Map<String, String>) {

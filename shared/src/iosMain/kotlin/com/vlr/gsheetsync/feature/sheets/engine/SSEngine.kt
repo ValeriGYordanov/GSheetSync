@@ -275,7 +275,7 @@ actual class SSEngine actual constructor(
     ) {
         safeCall(dispatcher, {
             insertColumn(columnIndex)
-        },completion)
+        }, completion)
     }
 
     /**
@@ -319,6 +319,133 @@ actual class SSEngine actual constructor(
             clearCell(cell)
         }, completion)
     }
+
+    /**
+     * Protects a sheet in the spreadsheet by title, preventing manual edits.
+     *
+     * @param sheetTitle The title of the sheet to protect
+     * @param dispatcher The coroutine context to execute in (default: DEFAULT)
+     * @param completion Callback with:
+     *   - First parameter: JSON representation of the protection update result, or null if the operation failed
+     *   - Second parameter: Error message string on failure
+     *
+     * @throws IllegalStateException if spreadsheet ID is not set
+     */
+    fun protectSheet(
+        sheetTitle: String? = null,
+        dispatcher: DispatcherOption = DispatcherOption.DEFAULT,
+        completion: (JsonElement?, String?) -> Unit
+    ) {
+        safeCall(dispatcher, {
+            protectSheet(sheetTitle)
+        }, completion)
+    }
+
+
+    /**
+     * Protects all sheets in the spreadsheet, preventing manual edits.
+     *
+     * @param dispatcher The coroutine context to execute in (default: DEFAULT)
+     * @param completion Callback with:
+     *   - First parameter: JSON representation of the protection update result, or null if the operation failed
+     *   - Second parameter: Error message string on failure
+     *
+     * @throws IllegalStateException if spreadsheet ID is not set
+     */
+    fun protectAllSheets(
+        dispatcher: DispatcherOption = DispatcherOption.DEFAULT,
+        completion: (JsonElement?, String?) -> Unit
+    ) {
+        safeCall(dispatcher, {
+            protectAllSheets()
+        }, completion)
+    }
+
+    /**
+     * Removes protection from a sheet by title, allowing manual edits again.
+     *
+     * @param sheetTitle The title of the sheet to unprotect
+     * @param dispatcher The coroutine context to execute in (default: DEFAULT)
+     * @param completion Callback with:
+     *   - First parameter: JSON representation of the unprotection update result, or null if the operation failed
+     *   - Second parameter: Error message string on failure
+     *
+     * @throws IllegalStateException if spreadsheet ID is not set
+     */
+    fun unprotectSheet(
+        sheetTitle: String? = null,
+        dispatcher: DispatcherOption = DispatcherOption.DEFAULT,
+        completion: (JsonElement?, String?) -> Unit
+    ) {
+        safeCall(dispatcher, {
+            unprotectSheet(sheetTitle)
+        }, completion)
+    }
+
+    /**
+     * Removes protection from all sheets in the spreadsheet, allowing manual edits again.
+     *
+     * @param dispatcher The coroutine context to execute in (default: DEFAULT)
+     * @param completion Callback with:
+     *   - First parameter: JSON representation of the unprotection update result, or null if the operation failed
+     *   - Second parameter: Error message string on failure
+     *
+     * @throws IllegalStateException if spreadsheet ID is not set
+     */
+    fun unprotectAllSheets(
+        dispatcher: DispatcherOption = DispatcherOption.DEFAULT,
+        completion: (JsonElement?, String?) -> Unit
+    ) {
+        safeCall(dispatcher, {
+            unprotectAllSheets()
+        }, completion)
+    }
+
+    /**
+     * Protects a range of cells in the spreadsheet.
+     *
+     * @param from Starting cell reference (A1 notation, e.g., "B2")
+     * @param to Ending cell reference (defaults to [from] for single-cell)
+     * @param dispatcher The coroutine context to execute in (default: DEFAULT)
+     * @param completion Callback with:
+     *   - First parameter: JSON representation of the protection update result, or null if the operation failed
+     *   - Second parameter: Error message string on failure
+     *
+     * @throws IllegalArgumentException for invalid cell references
+     * @throws IllegalStateException if spreadsheet ID is not set
+     */
+    fun protectCellsInRange(
+        from: String,
+        to: String,
+        dispatcher: DispatcherOption = DispatcherOption.DEFAULT,
+        completion: (JsonElement?, String?) -> Unit
+    ) {
+        safeCall(dispatcher, {
+            protectCellsInRange(from, to)
+        }, completion)
+    }
+
+    /**
+     * Protects all cells in the spreadsheet.
+     *
+     * @param sheetTitle The title of the sheet to protect
+     * @param dispatcher The coroutine context to execute in (default: DEFAULT)
+     * @param completion Callback with:
+     *   - First parameter: JSON representation of the protection update result, or null if the operation failed
+     *   - Second parameter: Error message string on failure
+     *
+     * @throws IllegalStateException if spreadsheet ID is not set
+     */
+    fun protectAllCells(
+        sheetTitle: String? = null,
+        dispatcher: DispatcherOption = DispatcherOption.DEFAULT,
+        completion: (JsonElement?, String?) -> Unit
+    ) {
+        safeCall(dispatcher, {
+            protectAllCells(sheetTitle)
+        }, completion)
+    }
+
 
     //--------------------------------------------------
     // Actual methods
@@ -414,7 +541,7 @@ actual class SSEngine actual constructor(
         from: String,
         to: String?
     ): Map<String, String>? {
-        return spreadsheetService.getData(from, to?: from)
+        return spreadsheetService.getData(from, to ?: from)
     }
 
     /**
@@ -480,6 +607,78 @@ actual class SSEngine actual constructor(
     actual suspend fun clearCell(cell: String): String? {
         return spreadsheetService.clearCell(cell)
     }
+
+    /**
+     * Protects a sheet in the spreadsheet by title, preventing manual edits.
+     *
+     * @param sheetTitle The title of the sheet to protect
+     * @return JSON representation of the protection update result, or null if the operation failed
+     * @throws IllegalStateException if spreadsheet ID is not set
+     */
+    actual suspend fun protectSheet(sheetTitle: String?): JsonElement? {
+        return spreadsheetService.protectSheet(sheetTitle)
+    }
+
+    /**
+     * Protects all sheets in the spreadsheet, preventing manual edits.
+     *
+     * @return JSON representation of the protection update result, or null if the operation failed
+     * @throws IllegalStateException if spreadsheet ID is not set
+     */
+    actual suspend fun protectAllSheets(): JsonElement? {
+        return spreadsheetService.protectAllSheets()
+    }
+
+    /**
+     * Removes protection from a sheet by title, allowing manual edits again.
+     *
+     * @param sheetTitle The title of the sheet to unprotect
+     * @return JSON representation of the unprotection update result, or null if the operation failed
+     * @throws IllegalStateException if spreadsheet ID is not set
+     */
+    actual suspend fun unprotectSheet(sheetTitle: String?): JsonElement? {
+        return spreadsheetService.unprotectSheet(sheetTitle)
+    }
+
+    /**
+     * Removes protection from all sheets in the spreadsheet, allowing manual edits again.
+     *
+     * @return JSON representation of the unprotection update result, or null if the operation failed
+     * @throws IllegalStateException if spreadsheet ID is not set
+     */
+    actual suspend fun unprotectAllSheets(): JsonElement? {
+        return spreadsheetService.unprotectAllSheets()
+    }
+
+    /**
+     * Protects a range of cells in the spreadsheet.
+     *
+     * @param from Starting cell reference (A1 notation, e.g., "B2")
+     * @param to Ending cell reference (defaults to [from] for single-cell)
+     * @return JSON representation of the protection update result, or null if the operation failed
+     * @throws IllegalArgumentException for invalid cell references
+     * @throws IllegalStateException if spreadsheet ID is not set
+     *
+     */
+    actual suspend fun protectCellsInRange(
+        from: String,
+        to: String
+    ): JsonElement? {
+        return spreadsheetService.protectCellsInRange(from, to)
+    }
+
+    /**
+     * Protects all cells in the spreadsheet.
+     *
+     * @param sheetTitle The title of the sheet to protect
+     * @return JSON representation of the protection update result, or null if the operation failed
+     *
+     * @throws IllegalStateException if spreadsheet ID is not set
+     */
+    actual suspend fun protectAllCells(sheetTitle: String?): JsonElement? {
+        return spreadsheetService.protectAllCellsInSheet(sheetTitle)
+    }
+
 
     //--------------------------------------------------
     // Private helper methods

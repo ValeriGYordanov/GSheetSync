@@ -1,5 +1,6 @@
 package com.vlr.gsheetsync.feature.sheets.data
 
+import com.vlr.gsheetsync.SyncLog
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.HttpRequestBuilder
@@ -12,7 +13,9 @@ import io.ktor.http.contentType
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.add
+import kotlinx.serialization.json.addJsonObject
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.int
@@ -20,6 +23,7 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonArray
 import kotlinx.serialization.json.putJsonObject
 
 /**
@@ -115,6 +119,7 @@ class SpreadSheetService(private val client: HttpClient) {
             setBody("{}")
         } ?: ""
     }
+
     /**
      * Retrieves spreadsheet metadata for a given URL.
      *
@@ -234,6 +239,294 @@ class SpreadSheetService(private val client: HttpClient) {
     }
 
     /**
+     * Protects a sheet in the spreadsheet by title, preventing manual edits.
+     *
+     * @param sheetTitle The title of the sheet to protect
+     * @return JSON representation of the protection update result, or null if the operation failed
+     * @throws IllegalStateException if spreadsheet ID is not set
+     */
+    suspend fun protectSheet(sheetTitle: String? = sheetName): JsonElement? {
+        val cfg = requireConfig()
+        val id = cfg.spreadsheetId
+
+        // Get sheet ID from spreadsheet metadata
+        val sheetsMetadata = getSpreadsheet()
+        val sheetId = sheetsMetadata
+            ?.jsonObject?.get("sheets")?.jsonArray
+            ?.firstOrNull { it.jsonObject["properties"]?.jsonObject?.get("title")?.jsonPrimitive?.content == sheetTitle }
+            ?.jsonObject?.get("properties")?.jsonObject?.get("sheetId")?.jsonPrimitive?.int
+
+        if (sheetId == null) {
+            throw IllegalArgumentException("Sheet with title '$sheetTitle' not found")
+        }
+
+        val body = buildJsonObject {
+            putJsonArray("requests") {
+                addJsonObject {
+                    putJsonObject("addProtectedRange") {
+                        putJsonObject("protectedRange") {
+                            put("description", "Protected by API")
+                            put("warningOnly", false)
+                            put("editors", buildJsonObject { put("users", buildJsonArray {}) }) // Empty editors = no one can edit
+                            putJsonObject("range") {
+                                put("sheetId", sheetId)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return safeApiPost<JsonElement>("$BASE_URL/$id:batchUpdate") {
+            bearerAuth(token)
+            contentType(ContentType.Application.Json)
+            setBody(body)
+        }
+    }
+
+    /**
+     * Removes protection from a sheet by title, allowing manual edits again.
+     *
+     * @param sheetTitle The title of the sheet to unprotect
+     * @return JSON representation of the unprotection update result, or null if the operation failed
+     * @throws IllegalStateException if spreadsheet ID is not set
+     */
+    suspend fun unprotectSheet(sheetTitle: String? = sheetName): JsonElement? {
+        val cfg = requireConfig()
+        val id = cfg.spreadsheetId
+
+        val spreadsheet = getSpreadsheet()
+        val sheets = spreadsheet?.jsonObject?.get("sheets")?.jsonArray ?: return null
+
+        val sheetId = sheets
+            .firstOrNull { it.jsonObject["properties"]?.jsonObject?.get("title")?.jsonPrimitive?.content == sheetTitle }
+            ?.jsonObject?.get("properties")?.jsonObject?.get("sheetId")?.jsonPrimitive?.int
+            ?: throw IllegalArgumentException("Sheet with title '$sheetTitle' not found")
+
+        val protectedRanges = spreadsheet.jsonObject["sheets"]?.jsonArray
+            ?.flatMap { sheet ->
+                sheet.jsonObject["protectedRanges"]?.jsonArray.orEmpty().mapNotNull { range ->
+                    val rangeObj = range.jsonObject
+                    val id = rangeObj["protectedRangeId"]?.jsonPrimitive?.int
+                    val rangeSheetId = rangeObj["range"]?.jsonObject?.get("sheetId")?.jsonPrimitive?.int
+                    if (id != null && rangeSheetId == sheetId) id else null
+                }
+            } ?: emptyList()
+
+        if (protectedRanges.isEmpty()) return null
+
+        val requests = buildJsonArray {
+            for (rangeId in protectedRanges) {
+                addJsonObject {
+                    putJsonObject("deleteProtectedRange") {
+                        put("protectedRangeId", rangeId)
+                    }
+                }
+            }
+        }
+
+        val body = buildJsonObject {
+            put("requests", requests)
+        }
+
+        return safeApiPost<JsonElement>("$BASE_URL/$id:batchUpdate") {
+            bearerAuth(token)
+            contentType(ContentType.Application.Json)
+            setBody(body)
+        }
+    }
+
+    /**
+     * Protects all sheets in the spreadsheet to prevent manual edits.
+     *
+     * @return JSON representation of the protection update result, or null if the operation failed
+     * @throws IllegalStateException if spreadsheet ID is not set
+     */
+    suspend fun protectAllSheets(): JsonElement? {
+        val cfg = requireConfig()
+        val id = cfg.spreadsheetId
+
+        // Get all sheets metadata
+        val sheetsMetadata = getSpreadsheet()
+        val sheets = sheetsMetadata?.jsonObject?.get("sheets")?.jsonArray ?: return null
+
+        // Build protection requests for all sheets
+        val protectionRequests = buildJsonArray {
+            for (sheet in sheets) {
+                val sheetId = sheet.jsonObject["properties"]
+                    ?.jsonObject?.get("sheetId")?.jsonPrimitive?.int ?: continue
+
+                addJsonObject {
+                    putJsonObject("addProtectedRange") {
+                        putJsonObject("protectedRange") {
+                            put("description", "Protected by API")
+                            put("warningOnly", false)
+                            put("editors", buildJsonObject {
+                                put("users", buildJsonArray {}) // No users allowed to edit manually
+                            })
+                            putJsonObject("range") {
+                                put("sheetId", sheetId) // Entire sheet
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        val body = buildJsonObject {
+            put("requests", protectionRequests)
+        }
+
+        return safeApiPost<JsonElement>("$BASE_URL/$id:batchUpdate") {
+            bearerAuth(token)
+            contentType(ContentType.Application.Json)
+            setBody(body)
+        }
+    }
+
+    /**
+     * Removes protection from all sheets in the spreadsheet.
+     *
+     * @return JSON representation of the unprotection update result, or null if the operation failed
+     * @throws IllegalStateException if spreadsheet ID is not set
+     */
+    suspend fun unprotectAllSheets(): JsonElement? {
+        val cfg = requireConfig()
+        val id = cfg.spreadsheetId
+
+        val spreadsheet = getSpreadsheet()
+        val sheets = spreadsheet?.jsonObject?.get("sheets")?.jsonArray ?: return null
+
+        val protectedRangeIds = sheets.flatMap { sheet ->
+            sheet.jsonObject["protectedRanges"]?.jsonArray.orEmpty().mapNotNull { range ->
+                range.jsonObject["protectedRangeId"]?.jsonPrimitive?.int
+            }
+        }
+
+        if (protectedRangeIds.isEmpty()) return null
+
+        val requests = buildJsonArray {
+            for (rangeId in protectedRangeIds) {
+                addJsonObject {
+                    putJsonObject("deleteProtectedRange") {
+                        put("protectedRangeId", rangeId)
+                    }
+                }
+            }
+        }
+
+        val body = buildJsonObject {
+            put("requests", requests)
+        }
+
+        return safeApiPost<JsonElement>("$BASE_URL/$id:batchUpdate") {
+            bearerAuth(token)
+            contentType(ContentType.Application.Json)
+            setBody(body)
+        }
+    }
+
+    /**
+     * Protects a range of cells in a sheet using A1 notation for 'from' and 'to' positions.
+     *
+     * @param from The starting cell in A1 notation (e.g., "A1")
+     * @param to The ending cell in A1 notation (e.g., "C30")
+     * @return JSON representation of the protection update result, or null if the operation failed
+     * @throws IllegalStateException if spreadsheet ID is not set
+     * @throws IllegalArgumentException if range inputs are invalid
+     */
+    suspend fun protectCellsInRange(from: String, to: String): JsonElement? {
+        val cfg = requireConfig()
+        val sheetName = cfg.sheetName
+
+        require(from.isValidA1()) { "Invalid 'from' A1 notation: $from" }
+        require(to.isValidA1()) { "Invalid 'to' A1 notation: $to" }
+
+        val id = cfg.spreadsheetId
+
+        // Fetch sheetId from sheet name
+        val spreadsheet = getSpreadsheet()
+        val sheet = spreadsheet?.jsonObject?.get("sheets")?.jsonArray?.firstOrNull {
+            it.jsonObject["properties"]?.jsonObject?.get("title")?.jsonPrimitive?.content == sheetName
+        } ?: throw IllegalArgumentException("Sheet '$sheetName' not found")
+
+        val sheetId = sheet.jsonObject["properties"]?.jsonObject?.get("sheetId")?.jsonPrimitive?.int
+            ?: throw IllegalStateException("SheetId missing for '$sheetName'")
+
+        // Convert A1 range (from & to) into GridRange
+        val gridRange = buildGridRangeFromA1(from, to, sheetId)
+
+        // Build protection request
+        val body = buildJsonObject {
+            putJsonArray("requests") {
+                addJsonObject {
+                    putJsonObject("addProtectedRange") {
+                        putJsonObject("protectedRange") {
+                            put("description", "Warning: Protected range $from to $to")
+                            put("warningOnly", true) // Enables warning instead of locking
+                            put("range", gridRange)
+                        }
+                    }
+                }
+            }
+        }
+
+        return safeApiPost<JsonElement>("$BASE_URL/$id:batchUpdate") {
+            bearerAuth(token)
+            contentType(ContentType.Application.Json)
+            setBody(body)
+        }
+    }
+
+    /**
+     * Protects all cells in a sheet by title, preventing manual edits.
+     *
+     * @param sheetTitle The title of the sheet to protect
+     * @return JSON representation of the protection update result, or null if the operation failed
+     * @throws IllegalStateException if spreadsheet ID is not set
+     */
+    suspend fun protectAllCellsInSheet(sheetTitle: String?): JsonElement? {
+        val cfg = requireConfig()
+        val id = cfg.spreadsheetId
+
+        // Get sheet ID from title
+        val spreadsheet = getSpreadsheet()
+        val sheet = spreadsheet?.jsonObject?.get("sheets")?.jsonArray?.firstOrNull {
+            it.jsonObject["properties"]?.jsonObject?.get("title")?.jsonPrimitive?.content == (sheetTitle?: sheetName)
+        } ?: throw IllegalArgumentException("Sheet '${(sheetTitle?: sheetName)}' not found")
+
+        val sheetId = sheet.jsonObject["properties"]?.jsonObject?.get("sheetId")?.jsonPrimitive?.int
+            ?: throw IllegalStateException("sheetId not found for sheet '${(sheetTitle?: sheetName)}'")
+
+        // Set a large range (adjustable depending on your needs)
+        val body = buildJsonObject {
+            putJsonArray("requests") {
+                addJsonObject {
+                    putJsonObject("addProtectedRange") {
+                        putJsonObject("protectedRange") {
+                            put("description", "Full cell protection by API")
+                            put("warningOnly", true)
+                            putJsonObject("range") {
+                                put("sheetId", sheetId)
+                                put("startRowIndex", 0)
+                                put("endRowIndex", 1000)       // Adjust based on expected sheet size
+                                put("startColumnIndex", 0)
+                                put("endColumnIndex", 26)      // A to Z = 26 columns
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return safeApiPost<JsonElement>("$BASE_URL/$id:batchUpdate") {
+            bearerAuth(token)
+            contentType(ContentType.Application.Json)
+            setBody(body)
+        }
+    }
+
+    /**
      * Retrieves data from a range of cells in the current sheet.
      *
      * @param from The starting cell reference (A1 notation)
@@ -328,14 +621,15 @@ class SpreadSheetService(private val client: HttpClient) {
                         putJsonObject("range") {
                             put("sheetId", sheetId)
                             put("dimension", dimension)
-                            put("startIndex", index)
-                            put("endIndex", index + 1)
+                            put("startIndex", index - 1)
+                            put("endIndex", index)
                         }
                         if (!delete) put("inheritFromBefore", false)
                     }
                 })
             })
         }
+        SyncLog.print("performing $key with body: $body")
         return safeApiPost<JsonElement>("$BASE_URL/${cfg.spreadsheetId}:batchUpdate") {
             bearerAuth(cfg.token)
             contentType(ContentType.Application.Json)
@@ -345,6 +639,26 @@ class SpreadSheetService(private val client: HttpClient) {
     //endregion
 
     //region Helpers
+
+    private fun buildGridRangeFromA1(from: String, to: String, sheetId: Int): JsonObject {
+        val regex = Regex("([A-Z]+)(\\d+)")
+        val fromMatch = regex.matchEntire(from) ?: throw IllegalArgumentException("Invalid 'from': $from")
+        val toMatch = regex.matchEntire(to) ?: throw IllegalArgumentException("Invalid 'to': $to")
+
+        val (colStart, rowStart) = fromMatch.destructured
+        val (colEnd, rowEnd) = toMatch.destructured
+
+        fun columnToIndex(col: String): Int =
+            col.fold(0) { acc, c -> acc * 26 + (c - 'A' + 1) } - 1
+
+        return buildJsonObject {
+            put("sheetId", sheetId)
+            put("startRowIndex", rowStart.toInt() - 1)
+            put("endRowIndex", rowEnd.toInt()) // end-exclusive
+            put("startColumnIndex", columnToIndex(colStart))
+            put("endColumnIndex", columnToIndex(colEnd) + 1) // end-exclusive
+        }
+    }
 
     private suspend inline fun <reified T> safeApiGet(
         url: String,
@@ -360,7 +674,9 @@ class SpreadSheetService(private val client: HttpClient) {
         url: String,
         noinline builder: HttpRequestBuilder.() -> Unit = {}
     ): T? = try {
+        SyncLog.print("Performing POST with url: $url")
         val response = client.post(url, builder).body<T>()
+        SyncLog.print("Response: $response")
         response
     } catch (e: Exception) {
         null

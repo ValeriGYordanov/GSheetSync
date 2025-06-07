@@ -57,6 +57,7 @@ dependencies {
     implementation(libs.koin.android)
     implementation(libs.koin.androidx.compose)
     implementation(libs.acompanist.swiperefresh)
+    implementation(libs.ktor.serialization.kotlinx.json)
 
     implementation("androidx.credentials:credentials:1.5.0")
     implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
