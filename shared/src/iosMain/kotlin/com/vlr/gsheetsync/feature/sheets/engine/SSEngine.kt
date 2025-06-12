@@ -446,6 +446,27 @@ actual class SSEngine actual constructor(
         }, completion)
     }
 
+    /**
+     * Sets the working sheet for operations.
+     *
+     * @param sheetTitle The title of the sheet to be used
+     * @param dispatcher The coroutine context to execute in (default: DEFAULT)
+     * @param completion Callback with:
+     *   - First parameter: JSON representation of the sheet data, or null if the operation failed
+     *   - Second parameter: Error message string on failure
+     *
+     * @throws IllegalArgumentException if the sheet name is blank
+     */
+    fun setWorkingSheet(
+        sheetTitle: String,
+        dispatcher: DispatcherOption = DispatcherOption.DEFAULT,
+        completion: (JsonElement?, String?) -> Unit
+    ) {
+        safeCall(dispatcher, {
+            setWorkingSheet(sheetTitle)
+        }, completion)
+    }
+
 
     //--------------------------------------------------
     // Actual methods
@@ -677,6 +698,18 @@ actual class SSEngine actual constructor(
      */
     actual suspend fun protectAllCells(sheetTitle: String?): JsonElement? {
         return spreadsheetService.protectAllCellsInSheet(sheetTitle)
+    }
+
+    /**
+     * Sets the name of the sheet to be used for operations.
+     *
+     * @param sheetTitle The title of the sheet to be used
+     * @return Serialized sheet metadata as [JsonElement], or null on failure
+     *
+     * @throws IllegalArgumentException if the sheet name is blank
+     */
+    actual suspend fun setWorkingSheet(sheetTitle: String): JsonElement? {
+        return spreadsheetService.setWorkingSheet(sheetTitle)
     }
 
 

@@ -41,6 +41,17 @@ expect class SSEngine(spreadsheetService: SpreadSheetService) {
      */
     suspend fun getSpreadsheet(googleSheetsUrl: String?): JsonElement?
 
+
+    /**
+     * Sets the name of the sheet to be used for operations.
+     *
+     * @param sheetTitle The title of the sheet to be used
+     * @return Serialized sheet metadata as [JsonElement], or null on failure
+     *
+     * @throws IllegalArgumentException if the sheet name is blank
+     */
+    suspend fun setWorkingSheet(sheetTitle: String): JsonElement?
+
     /**
      * Creates a new sheet in the current spreadsheet.
      * @see SpreadSheetService.createSheet

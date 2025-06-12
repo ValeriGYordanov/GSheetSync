@@ -26,6 +26,11 @@ class SpreadSheetRepository(private val service: SpreadSheetService) {
         return Json.decodeFromString<SheetSyncResponseModels.Spreadsheet>(result.toString())
     }
 
+    suspend fun setWorkingSheet(sheetTitle: String): Boolean {
+        val sheet = service.setWorkingSheet(sheetTitle)
+        return sheet != null
+    }
+
     suspend fun createSheet(sheetTitle: String): Boolean {
         val sheet = service.createSheet(sheetTitle)
         return sheet != null

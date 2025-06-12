@@ -98,6 +98,29 @@ class SpreadSheetService(private val client: HttpClient) {
             ?.jsonObject?.get("title")
             ?.jsonPrimitive?.content ?: "Initial"
     }
+
+    /**
+     * Sets the name of the sheet to be used for operations.
+     *
+     * @param sheetName The name of the sheet to be used
+     * @return The selected sheet with matching title or null if none was found.
+     *
+     * @throws IllegalArgumentException if the sheet name is blank
+     */
+    suspend fun setWorkingSheet(sheetName: String): JsonElement? {
+        require(sheetName.isNotBlank(), { "Sheet name cannot be blank" })
+
+        val sheets = getSpreadsheet()?.jsonObject?.get("sheets")?.jsonArray
+        val workingSheet = sheets?.find {
+            it.jsonObject["properties"]?.jsonObject?.get("title")?.jsonPrimitive?.content == sheetName
+        }
+
+        if (workingSheet != null) {
+            this.sheetName = sheetName
+            sheetId = workingSheet.jsonObject["properties"]?.jsonObject?.get("sheetId")?.jsonPrimitive?.int.toString()
+        }
+        return workingSheet
+    }
     //endregion
 
     //region Public API
