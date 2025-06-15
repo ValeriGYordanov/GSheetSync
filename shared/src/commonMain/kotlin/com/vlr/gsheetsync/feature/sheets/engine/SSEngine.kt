@@ -28,9 +28,12 @@ expect class SSEngine(spreadsheetService: SpreadSheetService) {
      * @see SpreadSheetService.createSpreadsheet
      *
      * @param title Name for the new spreadsheet (1-100 characters)
+     * @param sheetTitles Optional list of sheet titles to create in the new spreadsheet
+     * @param protected Whether the new spreadsheet should be protected (default: false)
+     *
      * @return Serialized spreadsheet metadata as [JsonElement], or null on failure
      */
-    suspend fun createSpreadsheet(title: String): JsonElement?
+    suspend fun createSpreadsheet(title: String, sheetTitles: List<String>?, protected: Boolean?): JsonElement?
 
     /**
      * Retrieves spreadsheet metadata.

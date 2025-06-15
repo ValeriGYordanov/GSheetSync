@@ -25,6 +25,8 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
 import kotlinx.serialization.json.putJsonObject
+import kotlin.math.abs
+import kotlin.random.Random
 
 /**
  * Service for interacting with Google Sheets API.
@@ -163,11 +165,41 @@ class SpreadSheetService(private val client: HttpClient) {
      * Creates a new spreadsheet with the given title.
      *
      * @param title The title for the new spreadsheet
+     * @param sheetsTitle List of titles for the sheets to be included.
+     * @param protected If true, all sheet ranges will be protected (full range).
      * @return JSON representation of the created spreadsheet or null if creation failed
      */
-    suspend fun createSpreadsheet(title: String): JsonElement? {
+    suspend fun createSpreadsheet(title: String, sheetsTitle: List<String>? = null, protected: Boolean? = null): JsonElement? {
         val body = buildJsonObject {
             putJsonObject("properties") { put("title", title) }
+            if (sheetsTitle != null) {
+                putJsonArray("sheets") {
+                    sheetsTitle.forEachIndexed { index, sheetName ->
+                        val generatedSheetId = abs(sheetName.hashCode()) + index
+                        addJsonObject {
+                            putJsonObject("properties") {
+                                put("sheetId", generatedSheetId)
+                                put("title", sheetName)
+                            }
+                            if (protected == true) {
+                                putJsonArray("protectedRanges") {
+                                    addJsonObject {
+                                        put("range", buildJsonObject {
+                                            put("sheetId", generatedSheetId)
+                                            put("startRowIndex", 0)
+                                            put("endRowIndex", 1000)
+                                            put("startColumnIndex", 0)
+                                            put("endColumnIndex", 26)
+                                        })
+                                        put("description", "Full sheet protection")
+                                        put("warningOnly", false)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
         return safeApiPost<JsonElement>(BASE_URL) {
             bearerAuth(requireConfig().token)
@@ -687,9 +719,12 @@ class SpreadSheetService(private val client: HttpClient) {
         url: String,
         noinline builder: HttpRequestBuilder.() -> Unit = {}
     ): T? = try {
+        SyncLog.print("Performing GET with url: $url")
         val response = client.get(url, builder).body<T>()
+        SyncLog.print("Response: $response")
         response
     } catch (e: Exception) {
+        SyncLog.print("Operation failed: $e")
         null
     }
 
@@ -702,6 +737,7 @@ class SpreadSheetService(private val client: HttpClient) {
         SyncLog.print("Response: $response")
         response
     } catch (e: Exception) {
+        SyncLog.print("Operation failed: $e")
         null
     }
 

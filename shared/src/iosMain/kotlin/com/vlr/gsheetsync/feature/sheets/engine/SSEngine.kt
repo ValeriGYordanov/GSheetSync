@@ -498,10 +498,12 @@ actual class SSEngine actual constructor(
      * @see SpreadSheetService.createSpreadsheet
      *
      * @param title Name for the new spreadsheet (1-100 characters)
+     * @param sheetTitles Optional list of sheet titles for the new spreadsheet
+     * @param protected Whether the new spreadsheet should be protected
      * @return Serialized spreadsheet metadata as [JsonElement], or null on failure
      */
-    actual suspend fun createSpreadsheet(title: String): JsonElement? {
-        return Json.encodeToJsonElement(spreadsheetService.createSpreadsheet(title))
+    actual suspend fun createSpreadsheet(title: String, sheetTitles: List<String>?, protected: Boolean?): JsonElement? {
+        return Json.encodeToJsonElement(spreadsheetService.createSpreadsheet(title, sheetTitles, protected))
     }
 
     /**
