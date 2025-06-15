@@ -201,8 +201,9 @@ class SpreadSheetService(private val client: HttpClient) {
                 }
             }
         }
+        require(token.isNotBlank(), { "Access token cannot be blank" })
         return safeApiPost<JsonElement>(BASE_URL) {
-            bearerAuth(requireConfig().token)
+            bearerAuth(token)
             contentType(ContentType.Application.Json)
             setBody(body)
         }
