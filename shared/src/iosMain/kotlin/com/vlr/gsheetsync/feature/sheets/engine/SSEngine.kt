@@ -82,6 +82,9 @@ actual class SSEngine actual constructor(
      * Creates a new spreadsheet with the specified title.
      *
      * @param title Name for the new spreadsheet (1-100 characters)
+     * @param sheetTitles Optional list of sheet titles for the new spreadsheet
+     * @param protected Whether the new spreadsheet should be protected
+     * 
      * @param dispatcher The coroutine context to execute in (default: DEFAULT)
      * @param completion Callback with:
      *   - First parameter: Serialized spreadsheet metadata as [JsonElement] on success
@@ -89,11 +92,13 @@ actual class SSEngine actual constructor(
      */
     fun createSpreadsheet(
         title: String,
+        sheetTitles: List<String>? = null,
+        protected: Boolean? = null,
         dispatcher: DispatcherOption = DispatcherOption.DEFAULT,
         completion: (JsonElement?, String?) -> Unit
     ) {
         safeCall(dispatcher, {
-            createSpreadsheet(title)
+            createSpreadsheet(title, sheetTitles, protected)
         }, completion)
     }
 
