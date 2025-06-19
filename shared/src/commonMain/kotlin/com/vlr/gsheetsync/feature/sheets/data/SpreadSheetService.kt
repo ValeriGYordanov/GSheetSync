@@ -81,7 +81,7 @@ class SpreadSheetService(private val client: HttpClient) {
      */
     fun setAccessToken(accessToken: String) {
         require(accessToken.isNotBlank())
-        token = accessToken + "123"
+        token = accessToken
     }
 
     /**
@@ -139,10 +139,15 @@ class SpreadSheetService(private val client: HttpClient) {
      * @return Empty string on success
      * @throws IllegalArgumentException if cell reference is invalid
      */
-    suspend fun clearCell(cell: String): String {
+    suspend fun clearCell(cell: String, sheetName: String? = null): String {
         require(cell.isValidA1())
         val cfg = requireConfig()
-        val fullRange = "${cfg.sheetName}!$cell"
+        val fullRange = if (sheetName == null) {
+            "${cfg.sheetName}!$cell"
+        } else {
+            "${sheetName}!$cell"
+        }
+
         return safeApiPost<String>("$BASE_URL/${cfg.spreadsheetId}/values/$fullRange:clear") {
             bearerAuth(cfg.token)
             contentType(ContentType.Application.Json)
@@ -508,9 +513,9 @@ class SpreadSheetService(private val client: HttpClient) {
      * @throws IllegalStateException if spreadsheet ID is not set
      * @throws IllegalArgumentException if range inputs are invalid
      */
-    suspend fun protectCellsInRange(from: String, to: String): JsonElement? {
+    suspend fun protectCellsInRange(from: String, to: String, sheetName: String? = null): JsonElement? {
         val cfg = requireConfig()
-        val sheetName = cfg.sheetName
+        val sheetTitle = sheetName ?: cfg.sheetName
 
         require(from.isValidA1()) { "Invalid 'from' A1 notation: $from" }
         require(to.isValidA1()) { "Invalid 'to' A1 notation: $to" }
@@ -520,11 +525,11 @@ class SpreadSheetService(private val client: HttpClient) {
         // Fetch sheetId from sheet name
         val spreadsheet = getSpreadsheet()
         val sheet = spreadsheet?.jsonObject?.get("sheets")?.jsonArray?.firstOrNull {
-            it.jsonObject["properties"]?.jsonObject?.get("title")?.jsonPrimitive?.content == sheetName
-        } ?: throw IllegalArgumentException("Sheet '$sheetName' not found")
+            it.jsonObject["properties"]?.jsonObject?.get("title")?.jsonPrimitive?.content == sheetTitle
+        } ?: throw IllegalArgumentException("Sheet '$sheetTitle' not found")
 
         val sheetId = sheet.jsonObject["properties"]?.jsonObject?.get("sheetId")?.jsonPrimitive?.int
-            ?: throw IllegalStateException("SheetId missing for '$sheetName'")
+            ?: throw IllegalStateException("SheetId missing for '$sheetTitle'")
 
         // Convert A1 range (from & to) into GridRange
         val gridRange = buildGridRangeFromA1(from, to, sheetId)
@@ -610,9 +615,13 @@ class SpreadSheetService(private val client: HttpClient) {
      * @param to The ending cell reference (A1 notation, defaults to same as 'from')
      * @return Map of cell addresses to their values (only includes non-blank cells)
      */
-    suspend fun getData(from: String, to: String = from): Map<String, String> {
+    suspend fun getData(from: String, to: String = from, sheetName: String? = null): Map<String, String> {
         val cfg = requireConfig()
-        val range = "${cfg.sheetName}!$from:$to"
+        val range = if (sheetName == null) {
+            "${cfg.sheetName}!$from:$to"
+        } else {
+            "${sheetName}!$from:$to"
+        }
         val result = safeApiGet<JsonElement>("$BASE_URL/${cfg.spreadsheetId}/values/$range") {
             bearerAuth(cfg.token)
         }
@@ -631,11 +640,12 @@ class SpreadSheetService(private val client: HttpClient) {
      * @param updates Map of cell addresses (A1 notation) to their new values
      * @return String representation of the API response or null if request fails
      */
-    suspend fun updateData(updates: Map<String, String>): String? {
+    suspend fun updateData(updates: Map<String, String>, sheetName: String? = null): String? {
         val cfg = requireConfig()
+        val sheetTitle = sheetName ?: cfg.sheetName
         val data = updates.map { (cell, value) ->
             buildJsonObject {
-                put("range", "${cfg.sheetName}!$cell")
+                put("range", "$sheetTitle!$cell")
                 put("values", buildJsonArray {
                     add(buildJsonArray { add(value) })
                 })

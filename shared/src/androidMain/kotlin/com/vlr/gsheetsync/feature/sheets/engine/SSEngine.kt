@@ -132,6 +132,21 @@ actual class SSEngine actual constructor(
     }
 
     /**
+     * Fetches cell values from a specified range.
+     * @see SpreadSheetService.getData
+     *
+     * @param from Starting cell reference (A1 notation, e.g., "B2")
+     * @param to Ending cell reference (defaults to [from] for single-cell)
+     * @param sheetName The name of the sheet to fetch from
+     *
+     * @return Map of cell references to values, or null on failure
+     * @throws IllegalArgumentException for invalid cell references
+     */
+    actual suspend fun getData(from: String, to: String?, sheetName: String): SSResult<Map<String, String>?> = safeCall {
+        spreadsheetService.getData(from, to?: from, sheetName)
+    }
+
+    /**
      * Updates multiple cells in batch.
      * @see SpreadSheetService.updateData
      *
@@ -141,6 +156,20 @@ actual class SSEngine actual constructor(
      */
     actual suspend fun updateData(updates: Map<String, String>): SSResult<String?> = safeCall {
         spreadsheetService.updateData(updates)
+    }
+
+    /**
+     * Updates multiple cells in batch.
+     * @see SpreadSheetService.updateData
+     *
+     * @param updates Map of cell references to values (e.g., {"A1" to "Hello"})
+     * @param sheetName The name of the sheet to update
+     *
+     * @return Raw API response string, or null on failure
+     * @throws IllegalArgumentException for invalid cell references or blank values
+     */
+    actual suspend fun updateData(updates: Map<String, String>, sheetName: String): SSResult<String?> = safeCall {
+        spreadsheetService.updateData(updates, sheetName)
     }
 
     /**
@@ -192,6 +221,19 @@ actual class SSEngine actual constructor(
      */
     actual suspend fun clearCell(cell: String): SSResult<String?> = safeCall {
         spreadsheetService.clearCell(cell)
+    }
+
+    /**
+     * Clears the content of a specific cell in the configured sheet.
+     *
+     * @param cell The cell reference in A1 notation (e.g., "A1")
+     * @param sheetName The name of the sheet to clear in
+     *
+     * @return Empty string on success
+     * @throws IllegalArgumentException if cell reference is invalid
+     */
+    actual suspend fun clearCell(cell: String, sheetName: String): SSResult<String?> = safeCall {
+        spreadsheetService.clearCell(cell, sheetName)
     }
 
     /**
@@ -250,6 +292,26 @@ actual class SSEngine actual constructor(
     actual suspend fun protectCellsInRange(
         from: String,
         to: String
+    ): SSResult<JsonElement?> = safeCall {
+        Json.encodeToJsonElement(spreadsheetService.protectCellsInRange(from, to))
+    }
+
+    /**
+     * Protects a range of cells in the spreadsheet.
+     *
+     * @param from Starting cell reference (A1 notation, e.g., "B2")
+     * @param to Ending cell reference (defaults to [from] for single-cell)
+     * @param sheetName The name of the sheet to protect
+     *
+     * @return JSON representation of the protection update result, or null if the operation failed
+     * @throws IllegalArgumentException for invalid cell references
+     * @throws IllegalStateException if spreadsheet ID is not set
+     *
+     */
+    actual suspend fun protectCellsInRange(
+        from: String,
+        to: String,
+        sheetName: String
     ): SSResult<JsonElement?> = safeCall {
         Json.encodeToJsonElement(spreadsheetService.protectCellsInRange(from, to))
     }

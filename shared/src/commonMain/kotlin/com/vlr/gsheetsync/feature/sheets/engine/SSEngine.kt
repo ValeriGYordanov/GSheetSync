@@ -99,6 +99,23 @@ expect class SSEngine(spreadsheetService: SpreadSheetService) {
     ): SSResult<Map<String, String>?>
 
     /**
+     * Fetches cell values from a specified range.
+     * @see SpreadSheetService.getData
+     *
+     * @param from Starting cell reference (A1 notation, e.g., "B2")
+     * @param to Ending cell reference (defaults to [from] for single-cell)
+     * @param sheetName The name of the sheet to fetch from
+     *
+     * @return Map of cell references to values, or null on failure
+     * @throws IllegalArgumentException for invalid cell references
+     */
+    suspend fun getData(
+        from: String,
+        to: String?,
+        sheetName: String
+    ): SSResult<Map<String, String>?>
+
+    /**
      * Updates multiple cells in batch.
      * @see SpreadSheetService.updateData
      *
@@ -107,6 +124,19 @@ expect class SSEngine(spreadsheetService: SpreadSheetService) {
      * @throws IllegalArgumentException for invalid cell references or blank values
      */
     suspend fun updateData(updates: Map<String, String>): SSResult<String?>
+
+
+    /**
+     * Updates multiple cells in batch.
+     * @see SpreadSheetService.updateData
+     *
+     * @param updates Map of cell references to values (e.g., {"A1" to "Hello"})
+     * @param sheetName The name of the sheet to update
+     *
+     * @return Raw API response string, or null on failure
+     * @throws IllegalArgumentException for invalid cell references or blank values
+     */
+    suspend fun updateData(updates: Map<String, String>, sheetName: String): SSResult<String?>
 
     /**
      * Inserts a new row at the specified index in a sheet.
@@ -148,6 +178,16 @@ expect class SSEngine(spreadsheetService: SpreadSheetService) {
      * @throws IllegalArgumentException if cell reference is invalid
      */
     suspend fun clearCell(cell: String): SSResult<String?>
+
+    /**
+     * Clears the content of a specific cell in the configured sheet.
+     *
+     * @param cell The cell reference in A1 notation (e.g., "A1")
+     * @param sheetName The name of the sheet to clear in
+     * @return Empty string on success
+     * @throws IllegalArgumentException if cell reference is invalid
+     */
+    suspend fun clearCell(cell: String, sheetName: String): SSResult<String?>
 
     /**
      * Protects a sheet in the spreadsheet by title, preventing manual edits.
@@ -194,6 +234,20 @@ expect class SSEngine(spreadsheetService: SpreadSheetService) {
      *
      */
     suspend fun protectCellsInRange(from: String, to: String): SSResult<JsonElement?>
+
+    /**
+     * Protects a range of cells in the spreadsheet.
+     *
+     * @param from Starting cell reference (A1 notation, e.g., "B2")
+     * @param to Ending cell reference (defaults to [from] for single-cell)
+     * @param sheetName The name of the sheet to protect
+     *
+     * @return JSON representation of the protection update result, or null if the operation failed
+     * @throws IllegalArgumentException for invalid cell references
+     * @throws IllegalStateException if spreadsheet ID is not set
+     *
+     */
+    suspend fun protectCellsInRange(from: String, to: String, sheetName: String): SSResult<JsonElement?>
 
     /**
      * Protects all cells in the spreadsheet.
