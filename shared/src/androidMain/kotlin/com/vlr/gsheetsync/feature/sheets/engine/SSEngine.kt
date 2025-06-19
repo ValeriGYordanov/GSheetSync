@@ -2,6 +2,7 @@ package com.vlr.gsheetsync.feature.sheets.engine
 
 import com.vlr.gsheetsync.SyncLog
 import com.vlr.gsheetsync.feature.sheets.data.SpreadSheetService
+import com.vlr.gsheetsync.feature.sheets.engine.data.SSResult
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
@@ -23,19 +24,6 @@ import kotlinx.serialization.json.encodeToJsonElement
 actual class SSEngine actual constructor(
     private val spreadsheetService: SpreadSheetService
 ) {
-    /**
-     * Callback for error notifications with default no-op implementation.
-     * Receives user-friendly error messages suitable for direct UI display.
-     *
-     */
-    var errorListener: (String) -> Unit = { }
-
-    /**
-     * Callback for loading state changes with default no-op implementation.
-     * Triggers on operation start/complete.
-     *
-     */
-    var loadingListener: (Boolean) -> Unit = { }
 
     /**
      * Sets the OAuth2 access token for API authentication.
@@ -68,7 +56,7 @@ actual class SSEngine actual constructor(
      *
      * @return Serialized spreadsheet metadata as [JsonElement], or null on failure
      */
-    actual suspend fun createSpreadsheet(title: String, sheetTitles: List<String>?, protected: Boolean?): JsonElement? = safeCall {
+    actual suspend fun createSpreadsheet(title: String, sheetTitles: List<String>?, protected: Boolean?): SSResult<JsonElement?> = safeCall {
         Json.encodeToJsonElement(spreadsheetService.createSpreadsheet(title, sheetTitles, protected))
     }
 
@@ -79,7 +67,7 @@ actual class SSEngine actual constructor(
      * @param googleSheetsUrl Optional URL to set spreadsheet ID before fetching
      * @return Serialized spreadsheet data as [JsonElement], or null on failure
      */
-    actual suspend fun getSpreadsheet(googleSheetsUrl: String?): JsonElement? = safeCall {
+    actual suspend fun getSpreadsheet(googleSheetsUrl: String?): SSResult<JsonElement?> = safeCall {
         Json.encodeToJsonElement(spreadsheetService.getSpreadsheet(googleSheetsUrl))
     }
 
@@ -91,7 +79,7 @@ actual class SSEngine actual constructor(
      *
      * @throws IllegalArgumentException if the sheet name is blank
      */
-    actual suspend fun setWorkingSheet(sheetTitle: String): JsonElement? = safeCall {
+    actual suspend fun setWorkingSheet(sheetTitle: String): SSResult<JsonElement?> = safeCall {
         spreadsheetService.setWorkingSheet(sheetTitle)
     }
 
@@ -103,7 +91,7 @@ actual class SSEngine actual constructor(
      * @param sheetTitle Name for the new sheet (1-100 chars, unique per spreadsheet)
      * @return Serialized response as [JsonElement], or null on failure
      */
-    actual suspend fun createSheet(sheetTitle: String): JsonElement? = safeCall {
+    actual suspend fun createSheet(sheetTitle: String): SSResult<JsonElement?> = safeCall {
         Json.encodeToJsonElement(spreadsheetService.createSheet(sheetTitle))
     }
 
@@ -115,7 +103,7 @@ actual class SSEngine actual constructor(
      * @return Serialized response as [JsonElement], or null on failure
      * @throws IllegalStateException if sheet doesn't exist
      */
-    actual suspend fun deleteSheet(sheetTitle: String): JsonElement? = safeCall {
+    actual suspend fun deleteSheet(sheetTitle: String): SSResult<JsonElement?> = safeCall {
         Json.encodeToJsonElement(spreadsheetService.deleteSheet(sheetTitle))
     }
 
@@ -126,7 +114,7 @@ actual class SSEngine actual constructor(
      * @param sheetTitle Name of the sheet to retrieve
      * @return Serialized sheet data as [JsonElement], or null if not found
      */
-    actual suspend fun getSheet(sheetTitle: String): JsonElement? = safeCall {
+    actual suspend fun getSheet(sheetTitle: String): SSResult<JsonElement?> = safeCall {
         Json.encodeToJsonElement(spreadsheetService.getSheet(sheetTitle))
     }
 
@@ -139,8 +127,23 @@ actual class SSEngine actual constructor(
      * @return Map of cell references to values, or null on failure
      * @throws IllegalArgumentException for invalid cell references
      */
-    actual suspend fun getData(from: String, to: String?): Map<String, String>? = safeCall {
+    actual suspend fun getData(from: String, to: String?): SSResult<Map<String, String>?> = safeCall {
         spreadsheetService.getData(from, to?: from)
+    }
+
+    /**
+     * Fetches cell values from a specified range.
+     * @see SpreadSheetService.getData
+     *
+     * @param from Starting cell reference (A1 notation, e.g., "B2")
+     * @param to Ending cell reference (defaults to [from] for single-cell)
+     * @param sheetName The name of the sheet to fetch from
+     *
+     * @return Map of cell references to values, or null on failure
+     * @throws IllegalArgumentException for invalid cell references
+     */
+    actual suspend fun getData(from: String, to: String?, sheetName: String): SSResult<Map<String, String>?> = safeCall {
+        spreadsheetService.getData(from, to?: from, sheetName)
     }
 
     /**
@@ -151,8 +154,22 @@ actual class SSEngine actual constructor(
      * @return Raw API response string, or null on failure
      * @throws IllegalArgumentException for invalid cell references or blank values
      */
-    actual suspend fun updateData(updates: Map<String, String>): String? = safeCall {
+    actual suspend fun updateData(updates: Map<String, String>): SSResult<String?> = safeCall {
         spreadsheetService.updateData(updates)
+    }
+
+    /**
+     * Updates multiple cells in batch.
+     * @see SpreadSheetService.updateData
+     *
+     * @param updates Map of cell references to values (e.g., {"A1" to "Hello"})
+     * @param sheetName The name of the sheet to update
+     *
+     * @return Raw API response string, or null on failure
+     * @throws IllegalArgumentException for invalid cell references or blank values
+     */
+    actual suspend fun updateData(updates: Map<String, String>, sheetName: String): SSResult<String?> = safeCall {
+        spreadsheetService.updateData(updates, sheetName)
     }
 
     /**
@@ -161,7 +178,7 @@ actual class SSEngine actual constructor(
      * @param rowIndex The index where the new row should be inserted
      * @return JSON representation of the API response or null if request fails
      */
-    actual suspend fun insertRow(rowIndex: Int): JsonElement? = safeCall {
+    actual suspend fun insertRow(rowIndex: Int): SSResult<JsonElement?> = safeCall {
         spreadsheetService.insertRow(rowIndex)
     }
 
@@ -171,7 +188,7 @@ actual class SSEngine actual constructor(
      * @param rowIndex The index of the row to delete
      * @return JSON representation of the API response or null if request fails
      */
-    actual suspend fun deleteRow(rowIndex: Int): JsonElement? = safeCall {
+    actual suspend fun deleteRow(rowIndex: Int): SSResult<JsonElement?> = safeCall {
         spreadsheetService.deleteRow(rowIndex)
     }
 
@@ -181,7 +198,7 @@ actual class SSEngine actual constructor(
      * @param columnIndex The index where the new column should be inserted
      * @return JSON representation of the API response or null if request fails
      */
-    actual suspend fun insertColumn(columnIndex: Int): JsonElement? = safeCall {
+    actual suspend fun insertColumn(columnIndex: Int): SSResult<JsonElement?> = safeCall {
         spreadsheetService.insertColumn(columnIndex)
     }
 
@@ -191,7 +208,7 @@ actual class SSEngine actual constructor(
      * @param columnIndex The index of the column to delete
      * @return JSON representation of the API response or null if request fails
      */
-    actual suspend fun deleteColumn(columnIndex: Int): JsonElement? = safeCall {
+    actual suspend fun deleteColumn(columnIndex: Int): SSResult<JsonElement?> = safeCall {
         spreadsheetService.deleteColumn(columnIndex)
     }
 
@@ -202,8 +219,21 @@ actual class SSEngine actual constructor(
      * @return Empty string on success
      * @throws IllegalArgumentException if cell reference is invalid
      */
-    actual suspend fun clearCell(cell: String): String? = safeCall {
+    actual suspend fun clearCell(cell: String): SSResult<String?> = safeCall {
         spreadsheetService.clearCell(cell)
+    }
+
+    /**
+     * Clears the content of a specific cell in the configured sheet.
+     *
+     * @param cell The cell reference in A1 notation (e.g., "A1")
+     * @param sheetName The name of the sheet to clear in
+     *
+     * @return Empty string on success
+     * @throws IllegalArgumentException if cell reference is invalid
+     */
+    actual suspend fun clearCell(cell: String, sheetName: String): SSResult<String?> = safeCall {
+        spreadsheetService.clearCell(cell, sheetName)
     }
 
     /**
@@ -213,7 +243,7 @@ actual class SSEngine actual constructor(
      * @return JSON representation of the protection update result, or null if the operation failed
      * @throws IllegalStateException if spreadsheet ID is not set
      */
-    actual suspend fun protectSheet(sheetTitle: String?): JsonElement? = safeCall {
+    actual suspend fun protectSheet(sheetTitle: String?): SSResult<JsonElement?> = safeCall {
         Json.encodeToJsonElement(spreadsheetService.protectSheet(sheetTitle))
     }
 
@@ -224,7 +254,7 @@ actual class SSEngine actual constructor(
      * @return JSON representation of the protection update result, or null if the operation failed
      * @throws IllegalStateException if spreadsheet ID is not set
      */
-    actual suspend fun protectAllSheets(): JsonElement? = safeCall {
+    actual suspend fun protectAllSheets(): SSResult<JsonElement?> = safeCall {
         Json.encodeToJsonElement(spreadsheetService.protectAllSheets())
     }
 
@@ -235,7 +265,7 @@ actual class SSEngine actual constructor(
      * @return JSON representation of the unprotection update result, or null if the operation failed
      * @throws IllegalStateException if spreadsheet ID is not set
      */
-    actual suspend fun unprotectSheet(sheetTitle: String?): JsonElement? = safeCall {
+    actual suspend fun unprotectSheet(sheetTitle: String?): SSResult<JsonElement?> = safeCall {
         Json.encodeToJsonElement(spreadsheetService.unprotectSheet(sheetTitle))
     }
 
@@ -245,7 +275,7 @@ actual class SSEngine actual constructor(
      * @return JSON representation of the unprotection update result, or null if the operation failed
      * @throws IllegalStateException if spreadsheet ID is not set
      */
-    actual suspend fun unprotectAllSheets(): JsonElement? = safeCall {
+    actual suspend fun unprotectAllSheets(): SSResult<JsonElement?> = safeCall {
         Json.encodeToJsonElement(spreadsheetService.unprotectAllSheets())
     }
 
@@ -262,7 +292,27 @@ actual class SSEngine actual constructor(
     actual suspend fun protectCellsInRange(
         from: String,
         to: String
-    ): JsonElement? = safeCall {
+    ): SSResult<JsonElement?> = safeCall {
+        Json.encodeToJsonElement(spreadsheetService.protectCellsInRange(from, to))
+    }
+
+    /**
+     * Protects a range of cells in the spreadsheet.
+     *
+     * @param from Starting cell reference (A1 notation, e.g., "B2")
+     * @param to Ending cell reference (defaults to [from] for single-cell)
+     * @param sheetName The name of the sheet to protect
+     *
+     * @return JSON representation of the protection update result, or null if the operation failed
+     * @throws IllegalArgumentException for invalid cell references
+     * @throws IllegalStateException if spreadsheet ID is not set
+     *
+     */
+    actual suspend fun protectCellsInRange(
+        from: String,
+        to: String,
+        sheetName: String
+    ): SSResult<JsonElement?> = safeCall {
         Json.encodeToJsonElement(spreadsheetService.protectCellsInRange(from, to))
     }
 
@@ -274,7 +324,7 @@ actual class SSEngine actual constructor(
      *
      * @throws IllegalStateException if spreadsheet ID is not set
      */
-    actual suspend fun protectAllCells(sheetTitle: String?): JsonElement? = safeCall {
+    actual suspend fun protectAllCells(sheetTitle: String?): SSResult<JsonElement?> = safeCall {
         Json.encodeToJsonElement(spreadsheetService.protectAllCellsInSheet(sheetTitle))
     }
 
@@ -289,20 +339,20 @@ actual class SSEngine actual constructor(
      * @param block Operation to execute safely
      * @return Result of the operation or null if failed
      */
-    private suspend fun <T> safeCall(block: suspend () -> T): T? {
-        loadingListener(true)
+    private suspend fun <T> safeCall(block: suspend () -> T): SSResult<T?> {
         return try {
-            block()
+            SSResult.success(block())
         } catch (e: IllegalArgumentException) {
             SyncLog.print(e.message ?: "Invalid operation parameters")
-            errorListener(e.message ?: "Invalid operation parameters")
-            null
+            SSResult.error(e)
         } catch (e: SerializationException) {
             SyncLog.print(e.message ?: "Data format error: ${e.message ?: "Unknown"}")
-            errorListener("Data format error: ${e.message ?: "Unknown"}")
-            null
+            SSResult.error(e)
+        } catch (e: Exception) {
+            SyncLog.print(e.message ?: "Unknown error:")
+            SSResult.error(e)
         } finally {
-            loadingListener(false)
+
         }
     }
 }
