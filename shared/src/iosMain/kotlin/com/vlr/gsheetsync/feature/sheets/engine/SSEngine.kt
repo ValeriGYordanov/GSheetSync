@@ -1,6 +1,7 @@
 package com.vlr.gsheetsync.feature.sheets.engine
 
 import com.vlr.gsheetsync.feature.sheets.data.SpreadSheetService
+import com.vlr.gsheetsync.feature.sheets.engine.data.SSResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -51,11 +52,10 @@ actual class SSEngine actual constructor(
     fun setAccessToken(
         token: String,
         dispatcher: DispatcherOption = DispatcherOption.DEFAULT,
-        completion: (JsonElement?, String?) -> Unit
+        completion: (SSResult<Unit?>) -> Unit
     ) {
         safeCall(dispatcher, {
             setAccessToken(token)
-            null
         }, completion)
     }
 
@@ -70,11 +70,10 @@ actual class SSEngine actual constructor(
     fun setSpreadsheetId(
         url: String,
         dispatcher: DispatcherOption = DispatcherOption.DEFAULT,
-        completion: (JsonElement?, String?) -> Unit
+        completion: (SSResult<Unit?>) -> Unit
     ) {
         safeCall(dispatcher, {
             setSpreadsheetId(url)
-            null
         }, completion)
     }
 
@@ -84,7 +83,7 @@ actual class SSEngine actual constructor(
      * @param title Name for the new spreadsheet (1-100 characters)
      * @param sheetTitles Optional list of sheet titles for the new spreadsheet
      * @param protected Whether the new spreadsheet should be protected
-     * 
+     *
      * @param dispatcher The coroutine context to execute in (default: DEFAULT)
      * @param completion Callback with:
      *   - First parameter: Serialized spreadsheet metadata as [JsonElement] on success
@@ -95,7 +94,7 @@ actual class SSEngine actual constructor(
         sheetTitles: List<String>? = null,
         protected: Boolean? = null,
         dispatcher: DispatcherOption = DispatcherOption.DEFAULT,
-        completion: (JsonElement?, String?) -> Unit
+        completion: (SSResult<JsonElement?>) -> Unit
     ) {
         safeCall(dispatcher, {
             createSpreadsheet(title, sheetTitles, protected)
@@ -114,7 +113,7 @@ actual class SSEngine actual constructor(
     fun getSpreadsheet(
         googleSheetsUrl: String? = null,
         dispatcher: DispatcherOption = DispatcherOption.DEFAULT,
-        completion: (JsonElement?, String?) -> Unit
+        completion: (SSResult<JsonElement?>) -> Unit
     ) {
         safeCall(dispatcher, {
             getSpreadsheet(googleSheetsUrl)
@@ -133,7 +132,7 @@ actual class SSEngine actual constructor(
     fun createSheet(
         sheetTitle: String,
         dispatcher: DispatcherOption = DispatcherOption.DEFAULT,
-        completion: (JsonElement?, String?) -> Unit
+        completion: (SSResult<JsonElement?>) -> Unit
     ) {
         safeCall(dispatcher, {
             createSheet(sheetTitle)
@@ -153,7 +152,7 @@ actual class SSEngine actual constructor(
     fun deleteSheet(
         sheetTitle: String,
         dispatcher: DispatcherOption = DispatcherOption.DEFAULT,
-        completion: (JsonElement?, String?) -> Unit
+        completion: (SSResult<JsonElement?>) -> Unit
     ) {
         safeCall(dispatcher, {
             deleteSheet(sheetTitle)
@@ -172,7 +171,7 @@ actual class SSEngine actual constructor(
     fun getSheet(
         sheetTitle: String,
         dispatcher: DispatcherOption = DispatcherOption.DEFAULT,
-        completion: (JsonElement?, String?) -> Unit
+        completion: (SSResult<JsonElement?>) -> Unit
     ) {
         safeCall(dispatcher, {
             getSheet(sheetTitle)
@@ -194,7 +193,7 @@ actual class SSEngine actual constructor(
         from: String,
         to: String = from,
         dispatcher: DispatcherOption = DispatcherOption.DEFAULT,
-        completion: (Map<String, String>?, String?) -> Unit
+        completion: (SSResult<Map<String, String>?>) -> Unit
     ) {
         safeCall(dispatcher, {
             getData(from, to)
@@ -214,7 +213,7 @@ actual class SSEngine actual constructor(
     fun updateData(
         updates: Map<String, String>,
         dispatcher: DispatcherOption = DispatcherOption.DEFAULT,
-        completion: (String?, String?) -> Unit
+        completion: (SSResult<String?>) -> Unit
     ) {
         safeCall(dispatcher, {
             updateData(updates)
@@ -234,7 +233,7 @@ actual class SSEngine actual constructor(
     fun insertRow(
         rowIndex: Int,
         dispatcher: DispatcherOption = DispatcherOption.DEFAULT,
-        completion: (JsonElement?, String?) -> Unit
+        completion: (SSResult<JsonElement?>) -> Unit
     ) {
         safeCall(dispatcher, {
             insertRow(rowIndex)
@@ -255,7 +254,7 @@ actual class SSEngine actual constructor(
     fun deleteRow(
         rowIndex: Int,
         dispatcher: DispatcherOption = DispatcherOption.DEFAULT,
-        completion: (JsonElement?, String?) -> Unit
+        completion: (SSResult<JsonElement?>) -> Unit
     ) {
         safeCall(dispatcher, {
             deleteRow(rowIndex)
@@ -276,7 +275,7 @@ actual class SSEngine actual constructor(
     fun insertColumn(
         columnIndex: Int,
         dispatcher: DispatcherOption = DispatcherOption.DEFAULT,
-        completion: (JsonElement?, String?) -> Unit
+        completion: (SSResult<JsonElement?>) -> Unit
     ) {
         safeCall(dispatcher, {
             insertColumn(columnIndex)
@@ -297,7 +296,7 @@ actual class SSEngine actual constructor(
     fun deleteColumn(
         columnIndex: Int,
         dispatcher: DispatcherOption = DispatcherOption.DEFAULT,
-        completion: (JsonElement?, String?) -> Unit
+        completion: (SSResult<JsonElement?>) -> Unit
     ) {
         safeCall(dispatcher, {
             deleteColumn(columnIndex)
@@ -318,7 +317,7 @@ actual class SSEngine actual constructor(
     fun clearCell(
         cell: String,
         dispatcher: DispatcherOption = DispatcherOption.DEFAULT,
-        completion: (String?, String?) -> Unit
+        completion: (SSResult<String?>) -> Unit
     ) {
         safeCall(dispatcher, {
             clearCell(cell)
@@ -339,7 +338,7 @@ actual class SSEngine actual constructor(
     fun protectSheet(
         sheetTitle: String? = null,
         dispatcher: DispatcherOption = DispatcherOption.DEFAULT,
-        completion: (JsonElement?, String?) -> Unit
+        completion: (SSResult<JsonElement?>) -> Unit
     ) {
         safeCall(dispatcher, {
             protectSheet(sheetTitle)
@@ -359,7 +358,7 @@ actual class SSEngine actual constructor(
      */
     fun protectAllSheets(
         dispatcher: DispatcherOption = DispatcherOption.DEFAULT,
-        completion: (JsonElement?, String?) -> Unit
+        completion: (SSResult<JsonElement?>) -> Unit
     ) {
         safeCall(dispatcher, {
             protectAllSheets()
@@ -380,7 +379,7 @@ actual class SSEngine actual constructor(
     fun unprotectSheet(
         sheetTitle: String? = null,
         dispatcher: DispatcherOption = DispatcherOption.DEFAULT,
-        completion: (JsonElement?, String?) -> Unit
+        completion: (SSResult<JsonElement?>) -> Unit
     ) {
         safeCall(dispatcher, {
             unprotectSheet(sheetTitle)
@@ -399,7 +398,7 @@ actual class SSEngine actual constructor(
      */
     fun unprotectAllSheets(
         dispatcher: DispatcherOption = DispatcherOption.DEFAULT,
-        completion: (JsonElement?, String?) -> Unit
+        completion: (SSResult<JsonElement?>) -> Unit
     ) {
         safeCall(dispatcher, {
             unprotectAllSheets()
@@ -423,7 +422,7 @@ actual class SSEngine actual constructor(
         from: String,
         to: String,
         dispatcher: DispatcherOption = DispatcherOption.DEFAULT,
-        completion: (JsonElement?, String?) -> Unit
+        completion: (SSResult<JsonElement?>) -> Unit
     ) {
         safeCall(dispatcher, {
             protectCellsInRange(from, to)
@@ -444,7 +443,7 @@ actual class SSEngine actual constructor(
     fun protectAllCells(
         sheetTitle: String? = null,
         dispatcher: DispatcherOption = DispatcherOption.DEFAULT,
-        completion: (JsonElement?, String?) -> Unit
+        completion: (SSResult<JsonElement?>) -> Unit
     ) {
         safeCall(dispatcher, {
             protectAllCells(sheetTitle)
@@ -465,7 +464,7 @@ actual class SSEngine actual constructor(
     fun setWorkingSheet(
         sheetTitle: String,
         dispatcher: DispatcherOption = DispatcherOption.DEFAULT,
-        completion: (JsonElement?, String?) -> Unit
+        completion: (SSResult<JsonElement?>) -> Unit
     ) {
         safeCall(dispatcher, {
             setWorkingSheet(sheetTitle)
@@ -483,8 +482,8 @@ actual class SSEngine actual constructor(
      *
      * @param token Valid Google API access token
      */
-    actual suspend fun setAccessToken(token: String): Unit? {
-        return spreadsheetService.setAccessToken(token)
+    actual suspend fun setAccessToken(token: String) = safeApiCall {
+        spreadsheetService.setAccessToken(token)
     }
 
     /**
@@ -494,8 +493,8 @@ actual class SSEngine actual constructor(
      *
      * @param url Valid Google Sheets URL (format: "https://docs.google.com/spreadsheets/d/{ID}/edit")
      */
-    actual suspend fun setSpreadsheetId(url: String): Unit? {
-        return spreadsheetService.setSpreadsheetId(url)
+    actual suspend fun setSpreadsheetId(url: String) = safeApiCall {
+        spreadsheetService.setSpreadsheetId(url)
     }
 
     /**
@@ -507,8 +506,18 @@ actual class SSEngine actual constructor(
      * @param protected Whether the new spreadsheet should be protected
      * @return Serialized spreadsheet metadata as [JsonElement], or null on failure
      */
-    actual suspend fun createSpreadsheet(title: String, sheetTitles: List<String>?, protected: Boolean?): JsonElement? {
-        return Json.encodeToJsonElement(spreadsheetService.createSpreadsheet(title, sheetTitles, protected))
+    actual suspend fun createSpreadsheet(
+        title: String,
+        sheetTitles: List<String>?,
+        protected: Boolean?
+    ) = safeApiCall {
+        Json.encodeToJsonElement(
+            spreadsheetService.createSpreadsheet(
+                title,
+                sheetTitles,
+                protected
+            )
+        )
     }
 
     /**
@@ -518,8 +527,8 @@ actual class SSEngine actual constructor(
      * @param googleSheetsUrl Optional URL to set spreadsheet ID before fetching
      * @return Serialized spreadsheet data as [JsonElement], or null on failure
      */
-    actual suspend fun getSpreadsheet(googleSheetsUrl: String?): JsonElement? {
-        return Json.encodeToJsonElement(spreadsheetService.getSpreadsheet(googleSheetsUrl))
+    actual suspend fun getSpreadsheet(googleSheetsUrl: String?) = safeApiCall {
+        Json.encodeToJsonElement(spreadsheetService.getSpreadsheet(googleSheetsUrl))
     }
 
     /**
@@ -529,8 +538,8 @@ actual class SSEngine actual constructor(
      * @param sheetTitle Name for the new sheet (1-100 chars, unique per spreadsheet)
      * @return Serialized response as [JsonElement], or null on failure
      */
-    actual suspend fun createSheet(sheetTitle: String): JsonElement? {
-        return Json.encodeToJsonElement(spreadsheetService.createSheet(sheetTitle))
+    actual suspend fun createSheet(sheetTitle: String) = safeApiCall {
+        Json.encodeToJsonElement(spreadsheetService.createSheet(sheetTitle))
     }
 
     /**
@@ -541,8 +550,8 @@ actual class SSEngine actual constructor(
      * @return Serialized response as [JsonElement], or null on failure
      * @throws IllegalStateException if sheet doesn't exist
      */
-    actual suspend fun deleteSheet(sheetTitle: String): JsonElement? {
-        return Json.encodeToJsonElement(spreadsheetService.deleteSheet(sheetTitle))
+    actual suspend fun deleteSheet(sheetTitle: String) = safeApiCall {
+        Json.encodeToJsonElement(spreadsheetService.deleteSheet(sheetTitle))
     }
 
     /**
@@ -552,8 +561,8 @@ actual class SSEngine actual constructor(
      * @param sheetTitle Name of the sheet to retrieve
      * @return Serialized sheet data as [JsonElement], or null if not found
      */
-    actual suspend fun getSheet(sheetTitle: String): JsonElement? {
-        return Json.encodeToJsonElement(spreadsheetService.getSheet(sheetTitle))
+    actual suspend fun getSheet(sheetTitle: String) = safeApiCall {
+        Json.encodeToJsonElement(spreadsheetService.getSheet(sheetTitle))
     }
 
     /**
@@ -568,8 +577,8 @@ actual class SSEngine actual constructor(
     actual suspend fun getData(
         from: String,
         to: String?
-    ): Map<String, String>? {
-        return spreadsheetService.getData(from, to ?: from)
+    ) = safeApiCall {
+        spreadsheetService.getData(from, to ?: from)
     }
 
     /**
@@ -580,8 +589,8 @@ actual class SSEngine actual constructor(
      * @return Raw API response string, or null on failure
      * @throws IllegalArgumentException for invalid cell references or blank values
      */
-    actual suspend fun updateData(updates: Map<String, String>): String? {
-        return spreadsheetService.updateData(updates)
+    actual suspend fun updateData(updates: Map<String, String>) = safeApiCall {
+        spreadsheetService.updateData(updates)
     }
 
 
@@ -591,8 +600,8 @@ actual class SSEngine actual constructor(
      * @param rowIndex The index where the new row should be inserted
      * @return JSON representation of the API response or null if request fails
      */
-    actual suspend fun insertRow(rowIndex: Int): JsonElement? {
-        return spreadsheetService.insertRow(rowIndex)
+    actual suspend fun insertRow(rowIndex: Int) = safeApiCall {
+        spreadsheetService.insertRow(rowIndex)
     }
 
     /**
@@ -601,8 +610,8 @@ actual class SSEngine actual constructor(
      * @param rowIndex The index of the row to delete
      * @return JSON representation of the API response or null if request fails
      */
-    actual suspend fun deleteRow(rowIndex: Int): JsonElement? {
-        return spreadsheetService.deleteRow(rowIndex)
+    actual suspend fun deleteRow(rowIndex: Int) = safeApiCall {
+        spreadsheetService.deleteRow(rowIndex)
     }
 
     /**
@@ -611,8 +620,8 @@ actual class SSEngine actual constructor(
      * @param columnIndex The index where the new column should be inserted
      * @return JSON representation of the API response or null if request fails
      */
-    actual suspend fun insertColumn(columnIndex: Int): JsonElement? {
-        return spreadsheetService.insertColumn(columnIndex)
+    actual suspend fun insertColumn(columnIndex: Int) = safeApiCall {
+        spreadsheetService.insertColumn(columnIndex)
     }
 
     /**
@@ -621,8 +630,8 @@ actual class SSEngine actual constructor(
      * @param columnIndex The index of the column to delete
      * @return JSON representation of the API response or null if request fails
      */
-    actual suspend fun deleteColumn(columnIndex: Int): JsonElement? {
-        return spreadsheetService.deleteColumn(columnIndex)
+    actual suspend fun deleteColumn(columnIndex: Int) = safeApiCall {
+        spreadsheetService.deleteColumn(columnIndex)
     }
 
     /**
@@ -632,8 +641,8 @@ actual class SSEngine actual constructor(
      * @return Empty string on success
      * @throws IllegalArgumentException if cell reference is invalid
      */
-    actual suspend fun clearCell(cell: String): String? {
-        return spreadsheetService.clearCell(cell)
+    actual suspend fun clearCell(cell: String) = safeApiCall {
+        spreadsheetService.clearCell(cell)
     }
 
     /**
@@ -643,8 +652,8 @@ actual class SSEngine actual constructor(
      * @return JSON representation of the protection update result, or null if the operation failed
      * @throws IllegalStateException if spreadsheet ID is not set
      */
-    actual suspend fun protectSheet(sheetTitle: String?): JsonElement? {
-        return spreadsheetService.protectSheet(sheetTitle)
+    actual suspend fun protectSheet(sheetTitle: String?) = safeApiCall {
+        spreadsheetService.protectSheet(sheetTitle)
     }
 
     /**
@@ -653,8 +662,8 @@ actual class SSEngine actual constructor(
      * @return JSON representation of the protection update result, or null if the operation failed
      * @throws IllegalStateException if spreadsheet ID is not set
      */
-    actual suspend fun protectAllSheets(): JsonElement? {
-        return spreadsheetService.protectAllSheets()
+    actual suspend fun protectAllSheets() = safeApiCall {
+        spreadsheetService.protectAllSheets()
     }
 
     /**
@@ -664,8 +673,8 @@ actual class SSEngine actual constructor(
      * @return JSON representation of the unprotection update result, or null if the operation failed
      * @throws IllegalStateException if spreadsheet ID is not set
      */
-    actual suspend fun unprotectSheet(sheetTitle: String?): JsonElement? {
-        return spreadsheetService.unprotectSheet(sheetTitle)
+    actual suspend fun unprotectSheet(sheetTitle: String?) = safeApiCall {
+        spreadsheetService.unprotectSheet(sheetTitle)
     }
 
     /**
@@ -674,8 +683,8 @@ actual class SSEngine actual constructor(
      * @return JSON representation of the unprotection update result, or null if the operation failed
      * @throws IllegalStateException if spreadsheet ID is not set
      */
-    actual suspend fun unprotectAllSheets(): JsonElement? {
-        return spreadsheetService.unprotectAllSheets()
+    actual suspend fun unprotectAllSheets() = safeApiCall {
+        spreadsheetService.unprotectAllSheets()
     }
 
     /**
@@ -691,8 +700,8 @@ actual class SSEngine actual constructor(
     actual suspend fun protectCellsInRange(
         from: String,
         to: String
-    ): JsonElement? {
-        return spreadsheetService.protectCellsInRange(from, to)
+    ) = safeApiCall {
+        spreadsheetService.protectCellsInRange(from, to)
     }
 
     /**
@@ -703,8 +712,8 @@ actual class SSEngine actual constructor(
      *
      * @throws IllegalStateException if spreadsheet ID is not set
      */
-    actual suspend fun protectAllCells(sheetTitle: String?): JsonElement? {
-        return spreadsheetService.protectAllCellsInSheet(sheetTitle)
+    actual suspend fun protectAllCells(sheetTitle: String?) = safeApiCall {
+        spreadsheetService.protectAllCellsInSheet(sheetTitle)
     }
 
     /**
@@ -715,8 +724,8 @@ actual class SSEngine actual constructor(
      *
      * @throws IllegalArgumentException if the sheet name is blank
      */
-    actual suspend fun setWorkingSheet(sheetTitle: String): JsonElement? {
-        return spreadsheetService.setWorkingSheet(sheetTitle)
+    actual suspend fun setWorkingSheet(sheetTitle: String) = safeApiCall {
+        spreadsheetService.setWorkingSheet(sheetTitle)
     }
 
 
@@ -737,10 +746,10 @@ actual class SSEngine actual constructor(
      * @param completion Callback to receive results or errors
      * @param T The return type of the operation
      */
-    private fun <T> safeCall(
+    private inline fun <reified T> safeCall(
         dispatcherOption: DispatcherOption,
-        block: suspend () -> T,
-        completion: (T?, String?) -> Unit
+        crossinline block: suspend () -> SSResult<T?>,
+        noinline completion: (SSResult<T?>) -> Unit
     ) {
         val dispatcher = when (dispatcherOption) {
             DispatcherOption.DEFAULT -> Dispatchers.Default
@@ -749,16 +758,20 @@ actual class SSEngine actual constructor(
         }
 
         CoroutineScope(dispatcher).launch {
-            try {
-                val result = block()
-                completion(result, null)
-            } catch (e: IllegalArgumentException) {
-                completion(null, e.message ?: "Invalid operation parameters")
-            } catch (e: SerializationException) {
-                completion(null, "Data format error: ${e.message ?: "Unknown"}")
-            } catch (e: Exception) {
-                completion(null, e.message ?: "Unknown error occurred")
-            }
+            val result = block()
+            completion(result)
+        }
+    }
+
+    private suspend fun <T> safeApiCall(block: suspend () -> T): SSResult<T?> {
+        return try {
+            SSResult.success(block())
+        } catch (e: IllegalArgumentException) {
+            SSResult.error(e)
+        } catch (e: SerializationException) {
+            SSResult.error(e)
+        } catch (e: Exception) {
+            SSResult.error(e)
         }
     }
 }

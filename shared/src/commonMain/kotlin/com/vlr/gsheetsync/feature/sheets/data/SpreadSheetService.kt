@@ -9,7 +9,10 @@ import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
+import io.ktor.http.isSuccess
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -78,7 +81,7 @@ class SpreadSheetService(private val client: HttpClient) {
      */
     fun setAccessToken(accessToken: String) {
         require(accessToken.isNotBlank())
-        token = accessToken
+        token = accessToken + "123"
     }
 
     /**
@@ -91,7 +94,8 @@ class SpreadSheetService(private val client: HttpClient) {
         val id = "/d/([a-zA-Z0-9-_]+)".toRegex().find(url)?.groupValues?.get(1)
             ?: throw IllegalArgumentException("Invalid Google Sheets URL")
         spreadsheetId = id
-        val spreadsheetProperties = getSpreadsheet()?.jsonObject?.get("sheets")?.jsonArray?.firstOrNull()?.jsonObject?.get("properties")
+        val spreadsheetProperties =
+            getSpreadsheet()?.jsonObject?.get("sheets")?.jsonArray?.firstOrNull()?.jsonObject?.get("properties")
         sheetId = spreadsheetProperties
             ?.jsonObject?.get("sheetId")
             ?.jsonPrimitive?.int.toString() ?: ""
@@ -119,7 +123,8 @@ class SpreadSheetService(private val client: HttpClient) {
 
         if (workingSheet != null) {
             this.sheetName = sheetName
-            sheetId = workingSheet.jsonObject["properties"]?.jsonObject?.get("sheetId")?.jsonPrimitive?.int.toString()
+            sheetId =
+                workingSheet.jsonObject["properties"]?.jsonObject?.get("sheetId")?.jsonPrimitive?.int.toString()
         }
         return workingSheet
     }
@@ -169,7 +174,11 @@ class SpreadSheetService(private val client: HttpClient) {
      * @param protected If true, all sheet ranges will be protected (full range).
      * @return JSON representation of the created spreadsheet or null if creation failed
      */
-    suspend fun createSpreadsheet(title: String, sheetsTitle: List<String>? = null, protected: Boolean? = null): JsonElement? {
+    suspend fun createSpreadsheet(
+        title: String,
+        sheetsTitle: List<String>? = null,
+        protected: Boolean? = null
+    ): JsonElement? {
         val body = buildJsonObject {
             putJsonObject("properties") { put("title", title) }
             if (sheetsTitle != null) {
@@ -275,8 +284,9 @@ class SpreadSheetService(private val client: HttpClient) {
     suspend fun deleteSheet(sheetTitle: String): JsonElement? {
         val cfg = requireConfig()
         val sheet = getSheet(sheetTitle)
-        val sheetId = sheet?.jsonObject?.get("properties")?.jsonObject?.get("sheetId")?.jsonPrimitive?.int
-            ?: throw IllegalStateException("Sheet not found")
+        val sheetId =
+            sheet?.jsonObject?.get("properties")?.jsonObject?.get("sheetId")?.jsonPrimitive?.int
+                ?: throw IllegalStateException("Sheet not found")
 
         val body = buildJsonObject {
             put("requests", buildJsonArray {
@@ -323,7 +333,13 @@ class SpreadSheetService(private val client: HttpClient) {
                         putJsonObject("protectedRange") {
                             put("description", "Protected by API")
                             put("warningOnly", false)
-                            put("editors", buildJsonObject { put("users", buildJsonArray {}) }) // Empty editors = no one can edit
+                            put(
+                                "editors",
+                                buildJsonObject {
+                                    put(
+                                        "users",
+                                        buildJsonArray {})
+                                }) // Empty editors = no one can edit
                             putJsonObject("range") {
                                 put("sheetId", sheetId)
                             }
@@ -364,7 +380,8 @@ class SpreadSheetService(private val client: HttpClient) {
                 sheet.jsonObject["protectedRanges"]?.jsonArray.orEmpty().mapNotNull { range ->
                     val rangeObj = range.jsonObject
                     val id = rangeObj["protectedRangeId"]?.jsonPrimitive?.int
-                    val rangeSheetId = rangeObj["range"]?.jsonObject?.get("sheetId")?.jsonPrimitive?.int
+                    val rangeSheetId =
+                        rangeObj["range"]?.jsonObject?.get("sheetId")?.jsonPrimitive?.int
                     if (id != null && rangeSheetId == sheetId) id else null
                 }
             } ?: emptyList()
@@ -548,11 +565,12 @@ class SpreadSheetService(private val client: HttpClient) {
         // Get sheet ID from title
         val spreadsheet = getSpreadsheet()
         val sheet = spreadsheet?.jsonObject?.get("sheets")?.jsonArray?.firstOrNull {
-            it.jsonObject["properties"]?.jsonObject?.get("title")?.jsonPrimitive?.content == (sheetTitle?: sheetName)
-        } ?: throw IllegalArgumentException("Sheet '${(sheetTitle?: sheetName)}' not found")
+            it.jsonObject["properties"]?.jsonObject?.get("title")?.jsonPrimitive?.content == (sheetTitle
+                ?: sheetName)
+        } ?: throw IllegalArgumentException("Sheet '${(sheetTitle ?: sheetName)}' not found")
 
         val sheetId = sheet.jsonObject["properties"]?.jsonObject?.get("sheetId")?.jsonPrimitive?.int
-            ?: throw IllegalStateException("sheetId not found for sheet '${(sheetTitle?: sheetName)}'")
+            ?: throw IllegalStateException("sheetId not found for sheet '${(sheetTitle ?: sheetName)}'")
 
         // Set a large range (adjustable depending on your needs)
         val body = buildJsonObject {
@@ -565,7 +583,10 @@ class SpreadSheetService(private val client: HttpClient) {
                             putJsonObject("range") {
                                 put("sheetId", sheetId)
                                 put("startRowIndex", 0)
-                                put("endRowIndex", 1000)       // Adjust based on expected sheet size
+                                put(
+                                    "endRowIndex",
+                                    1000
+                                )       // Adjust based on expected sheet size
                                 put("startColumnIndex", 0)
                                 put("endColumnIndex", 26)      // A to Z = 26 columns
                             }
@@ -653,7 +674,8 @@ class SpreadSheetService(private val client: HttpClient) {
      * @param columnIndex The index where the new column should be inserted
      * @return JSON representation of the API response or null if request fails
      */
-    suspend fun insertColumn(columnIndex: Int): JsonElement? = modifyDimension("COLUMNS", columnIndex)
+    suspend fun insertColumn(columnIndex: Int): JsonElement? =
+        modifyDimension("COLUMNS", columnIndex)
 
     /**
      * Deletes a column at the specified index in a sheet.
@@ -661,7 +683,8 @@ class SpreadSheetService(private val client: HttpClient) {
      * @param columnIndex The index of the column to delete
      * @return JSON representation of the API response or null if request fails
      */
-    suspend fun deleteColumn(columnIndex: Int): JsonElement? = modifyDimension("COLUMNS", columnIndex, true)
+    suspend fun deleteColumn(columnIndex: Int): JsonElement? =
+        modifyDimension("COLUMNS", columnIndex, true)
 
     private suspend fun modifyDimension(
         dimension: String,
@@ -698,7 +721,8 @@ class SpreadSheetService(private val client: HttpClient) {
 
     private fun buildGridRangeFromA1(from: String, to: String, sheetId: Int): JsonObject {
         val regex = Regex("([A-Z]+)(\\d+)")
-        val fromMatch = regex.matchEntire(from) ?: throw IllegalArgumentException("Invalid 'from': $from")
+        val fromMatch =
+            regex.matchEntire(from) ?: throw IllegalArgumentException("Invalid 'from': $from")
         val toMatch = regex.matchEntire(to) ?: throw IllegalArgumentException("Invalid 'to': $to")
 
         val (colStart, rowStart) = fromMatch.destructured
@@ -719,32 +743,44 @@ class SpreadSheetService(private val client: HttpClient) {
     private suspend inline fun <reified T> safeApiGet(
         url: String,
         noinline builder: HttpRequestBuilder.() -> Unit = {}
-    ): T? = try {
+    ): T? {
         SyncLog.print("Performing GET with url: $url")
-        val response = client.get(url, builder).body<T>()
-        SyncLog.print("Response: $response")
-        response
-    } catch (e: Exception) {
-        SyncLog.print("Operation failed: $e")
-        null
+        val response = client.get(url, builder)
+
+        if (!response.status.isSuccess()) {
+            // Try to parse error response
+            val errorResponse = response.body<ErrorResponse>()
+            SyncLog.print("API Error: ${errorResponse.error?.code} - ${errorResponse.error?.message}")
+            throw Exception("API Error: ${errorResponse.error?.code} - ${errorResponse.error?.message}")
+        }
+
+        val responseBody = response.body<T>()
+        SyncLog.print("Response: $responseBody")
+        return responseBody
     }
 
     private suspend inline fun <reified T> safeApiPost(
         url: String,
         noinline builder: HttpRequestBuilder.() -> Unit = {}
-    ): T? = try {
+    ): T? {
         SyncLog.print("Performing POST with url: $url")
-        val response = client.post(url, builder).body<T>()
-        SyncLog.print("Response: $response")
-        response
-    } catch (e: Exception) {
-        SyncLog.print("Operation failed: $e")
-        null
+        val response = client.post(url, builder)
+
+        if (!response.status.isSuccess()) {
+            // Try to parse error response
+            val errorResponse = response.body<ErrorResponse>()
+            SyncLog.print("API Error: ${errorResponse.error?.code} - ${errorResponse.error?.message}")
+            throw Exception("API Error: ${errorResponse.error?.code} - ${errorResponse.error?.message}")
+        }
+
+        val responseBody = response.body<T>()
+        SyncLog.print("Response: $responseBody")
+        return responseBody
     }
 
     private fun extractSheetIdFromUrl(url: String?): String {
         val regex = Regex("/spreadsheets/d/([a-zA-Z0-9-_]+)")
-        return regex.find(url?:"INVALID URL")?.groupValues?.get(1)
+        return regex.find(url ?: "INVALID URL")?.groupValues?.get(1)
             ?: throw IllegalArgumentException("Invalid spreadsheet URL")
     }
 
@@ -753,3 +789,15 @@ class SpreadSheetService(private val client: HttpClient) {
 
 fun String.isValidA1(): Boolean =
     matches(Regex("^[A-Z]+\\d+(?::[A-Z]+\\d+)?$"))
+
+// Define error response data classes
+@Serializable
+data class ErrorResponse(
+    val error: ApiError?
+)
+
+@Serializable
+data class ApiError(
+    val code: Int,
+    val message: String
+)
