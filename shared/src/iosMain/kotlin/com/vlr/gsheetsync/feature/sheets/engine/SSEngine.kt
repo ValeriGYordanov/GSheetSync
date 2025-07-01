@@ -121,6 +121,46 @@ actual class SSEngine actual constructor(
     }
 
     /**
+     * Searches for a spreadsheet with the given name.
+     *
+     * @param name Name of the spreadsheet to search for
+     * @param dispatcher The coroutine context to execute in (default: DEFAULT)
+     * @param completion Callback with:
+     *   - First parameter: Serialized spreadsheet metadata as [JsonElement] on success
+     *   - Second parameter: Error message string on failure
+     *
+     */
+    fun findSpreadsheetByName(
+        name: String,
+        dispatcher: DispatcherOption = DispatcherOption.DEFAULT,
+        completion: (SSResult<JsonElement?>) -> Unit
+    ) {
+        safeCall(dispatcher, {
+            findSpreadsheetByName(name)
+        }, completion)
+    }
+
+    /**
+     * Shares the spreadsheet with anyone who has the link (read/write).
+     *
+     * @param dispatcher The coroutine context to execute in (default: DEFAULT)
+     * @param completion Callback with:
+     *   - First parameter: Serialized response as [JsonElement] on success
+     *   - Second parameter: Error message string on failure
+     *
+     * @throws IllegalStateException if spreadsheet ID is not set
+     * @throws IllegalArgumentException if token is not set
+     */
+    fun shareSpreadsheetPublicly(
+        dispatcher: DispatcherOption = DispatcherOption.DEFAULT,
+        completion: (SSResult<JsonElement?>) -> Unit
+    ) {
+        safeCall(dispatcher, {
+            shareSpreadsheetPublicly()
+        }, completion)
+    }
+
+    /**
      * Creates a new sheet in the current spreadsheet.
      *
      * @param sheetTitle Name for the new sheet (1-100 chars, unique per spreadsheet)
@@ -626,6 +666,21 @@ actual class SSEngine actual constructor(
      */
     actual suspend fun getSpreadsheet(googleSheetsUrl: String?) = safeApiCall {
         Json.encodeToJsonElement(spreadsheetService.getSpreadsheet(googleSheetsUrl))
+    }
+
+    /**
+     * Searches for a spreadsheet with the given name.
+     * @see SpreadSheetService.findSpreadsheetByName
+     *
+     * @param name Name of the spreadsheet to search for
+     * @return Serialized spreadsheet metadata as [JsonElement], or null on failure
+     */
+    actual suspend fun findSpreadsheetByName(name: String) = safeApiCall {
+        Json.encodeToJsonElement(spreadsheetService.findSpreadsheetByName(name))
+    }
+
+    actual suspend fun shareSpreadsheetPublicly() = safeApiCall {
+        Json.encodeToJsonElement(spreadsheetService.shareSpreadsheetPublicly())
     }
 
     /**

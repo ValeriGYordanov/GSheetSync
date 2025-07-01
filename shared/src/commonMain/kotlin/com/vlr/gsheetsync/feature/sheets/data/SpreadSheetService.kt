@@ -4,14 +4,18 @@ import com.vlr.gsheetsync.SyncLog
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.HttpRequestBuilder
+import io.ktor.client.request.accept
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.utils.EmptyContent.contentType
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
+import io.ktor.http.encodeURLParameter
 import io.ktor.http.isSuccess
+import io.ktor.utils.io.errors.IOException
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -131,6 +135,47 @@ class SpreadSheetService(private val client: HttpClient) {
     //endregion
 
     //region Public API
+
+    /**
+     * Searches for a spreadsheet with the given name using the Google Drive API.
+     *
+     * @param name The name (title) of the spreadsheet to search for.
+     * @return JSON representation of the matching spreadsheet metadata or null if not found.
+     */
+    suspend fun findSpreadsheetByName(name: String): JsonElement? {
+        require(token.isNotBlank()) { "Access token cannot be blank" }
+
+        val query = "mimeType='application/vnd.google-apps.spreadsheet' and name='${name}' and trashed=false"
+        val url = "https://www.googleapis.com/drive/v3/files?q=${query.encodeURLParameter()}&fields=files(id,name)"
+
+        return safeApiGet<JsonElement>(url) {
+            bearerAuth(token)
+            accept(ContentType.Application.Json)
+        }
+    }
+
+    /**
+     * Shares the spreadsheet with anyone who has the link (read/write).
+     *
+     * @throws IllegalStateException if the spreadsheet ID is not set
+     */
+    suspend fun shareSpreadsheetPublicly(): JsonElement? {
+        require(token.isNotBlank()) { "Access token cannot be blank" }
+        require(spreadsheetId.isNotBlank()) { "Spreadsheet ID is not set" }
+
+        val url = "https://www.googleapis.com/drive/v3/files/$spreadsheetId/permissions"
+
+        val payload = buildJsonObject {
+            put("role", "writer")
+            put("type", "anyone")
+        }
+
+        return safeApiPost<JsonObject>(url) {
+            contentType(ContentType.Application.Json)
+            bearerAuth(token)
+            setBody(payload)
+        }
+    }
 
     /**
      * Clears the content of a specific cell in the configured sheet.

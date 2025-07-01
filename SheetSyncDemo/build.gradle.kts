@@ -62,6 +62,7 @@ dependencies {
     implementation("androidx.credentials:credentials:1.5.0")
     implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
     implementation("com.google.android.gms:play-services-auth:21.0.0")
+    implementation("com.google.apis:google-api-services-drive:v3-rev20250511-2.0.0")
 
     implementation(libs.google.api.services.sheets)
     debugImplementation(libs.compose.ui.tooling)

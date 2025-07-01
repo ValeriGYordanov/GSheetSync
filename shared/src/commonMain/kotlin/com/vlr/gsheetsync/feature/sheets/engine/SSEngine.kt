@@ -45,6 +45,25 @@ expect class SSEngine(spreadsheetService: SpreadSheetService) {
      */
     suspend fun getSpreadsheet(googleSheetsUrl: String?): SSResult<JsonElement?>
 
+    /**
+     * Searches for a spreadsheet with the given name.
+     * @see SpreadSheetService.findSpreadsheetByName
+     *
+     * @param name Name of the spreadsheet to search for
+     * @return Serialized spreadsheet metadata as [JsonElement], or null on failure
+     */
+    suspend fun findSpreadsheetByName(name: String): SSResult<JsonElement?>
+
+
+    /**
+     * Shares the spreadsheet with anyone who has the link (read/write).
+     * @see SpreadSheetService.shareSpreadsheetPublicly
+     *
+     * @return Serialized response as [JsonElement], or null on failure
+     * @throws IllegalStateException if spreadsheet ID is not set
+     * @throws IllegalArgumentException if token is not set
+     */
+    suspend fun shareSpreadsheetPublicly(): SSResult<JsonElement?>
 
     /**
      * Sets the name of the sheet to be used for operations.

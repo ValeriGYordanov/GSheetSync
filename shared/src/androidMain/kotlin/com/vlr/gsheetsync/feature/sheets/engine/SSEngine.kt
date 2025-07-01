@@ -83,6 +83,30 @@ actual class SSEngine actual constructor(
         spreadsheetService.setWorkingSheet(sheetTitle)
     }
 
+    /**
+     * Searches for a spreadsheet with the given name.
+     * @see SpreadSheetService.findSpreadsheetByName
+     *
+     * @param name Name of the spreadsheet to search for
+     * @return Serialized spreadsheet metadata as [JsonElement], or null on failure
+     * @throws IllegalArgumentException if the sheet name is blank
+     * @throws IllegalArgumentException if token is not set
+     */
+    actual suspend fun findSpreadsheetByName(name: String): SSResult<JsonElement?> = safeCall {
+        Json.encodeToJsonElement(spreadsheetService.findSpreadsheetByName(name))
+    }
+
+    /**
+     * Shares the spreadsheet with anyone who has the link (read/write).
+     * @see SpreadSheetService.shareSpreadsheetPublicly
+     *
+     * @return Serialized response as [JsonElement], or null on failure
+     * @throws IllegalStateException if spreadsheet ID is not set
+     * @throws IllegalArgumentException if token is not set
+     */
+    actual suspend fun shareSpreadsheetPublicly(): SSResult<JsonElement?> = safeCall {
+        Json.encodeToJsonElement(spreadsheetService.shareSpreadsheetPublicly())
+    }
 
     /**
      * Creates a new sheet in the current spreadsheet.
