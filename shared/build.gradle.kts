@@ -37,7 +37,7 @@ kotlin {
     iosSimulatorArm64()
 
     cocoapods {
-        version = "1.0.7"
+        version = "1.0.8"
         summary = "Utilise Google Sheets API with KMP"
         homepage = "https://github.com/ValeriGYordanov/GSheetSync"
         name = "GSheetSync"
@@ -97,7 +97,7 @@ publishing {
         create<MavenPublication>("androidReleaseAar") {
             groupId = "com.github.vlr"
             artifactId = "gsheetsync"
-            version = "1.0.7"
+            version = "1.0.8"
 
             afterEvaluate {
                 from(components.findByName("androidRelease") ?: components["release"])

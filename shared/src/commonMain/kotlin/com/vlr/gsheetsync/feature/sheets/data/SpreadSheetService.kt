@@ -697,7 +697,7 @@ class SpreadSheetService(private val client: HttpClient) {
             }
         }
         val body = buildJsonObject {
-            put("valueInputOption", "RAW")
+            put("valueInputOption", "USER_ENTERED")
             put("data", JsonArray(data))
         }
         return safeApiPost<JsonElement>("$BASE_URL/${cfg.spreadsheetId}/values:batchUpdate") {
